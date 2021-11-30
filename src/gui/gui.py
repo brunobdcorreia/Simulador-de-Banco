@@ -11,7 +11,7 @@ def init_gui(nome, cpf, saldo):
     lbl_dados = tk.Label(master=frm_menu, text="Dados do cliente")
     lbl_nome = tk.Label(master=frm_menu, text="Nome: " + nome)
     lbl_cpf = tk.Label(master=frm_menu, text= "CPF: " + cpf)
-    lbl_saldo = tk.Label(master=frm_menu, text="Saldo: " + saldo)
+    lbl_saldo = tk.Label(master=frm_menu, text="Saldo: " + str(saldo))
 
     # Criar submenu a direita com botões para transferir e retirar
     btn_transferir = tk.Button(master=frm_sub, text="Realizar transferencia", command=transferir)
