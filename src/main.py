@@ -6,4 +6,6 @@ db.criar_db()
 
 c = Cliente('Braia', '23.476.987-32', 1234.56)
 
+# ui.init_gui('Braia', '23.476.987-32', 1234.56)
+
 db.criar_cliente(c)
