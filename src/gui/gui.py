@@ -1,9 +1,8 @@
 from tkinter import messagebox
 from models.cliente import Cliente
-from db.database import criar_cliente
+from db.database import criar_cliente, autenticar_cliente
 import tkinter as tk
 from tkinter.messagebox import *
-import os
 
 def init_gui(nome, cpf, saldo):
     window = tk.Tk("Banco")
@@ -60,21 +59,14 @@ def __criar_janela_login():
     tela_login.title('Realizar login')
     tela_login.geometry('300x250')
 
-    global usuario_verificar
     global rg_verificar
+    global pin_verificar
 
-    usuario_verificar = tk.StringVar()
     rg_verificar = tk.StringVar()
+    pin_verificar = tk.StringVar()
 
     tk.Label(tela_login, text="Insira suas credenciais", bg="blue", fg='white').pack()
     tk.Label(tela_login, text="").pack()
-
-    usuario_lbl = tk.Label(tela_login, text='Usuario *')
-    usuario_lbl.pack()
-
-    global usuario_ent_login
-    usuario_ent_login = tk.Entry(tela_login, textvariable=usuario_verificar)
-    usuario_ent_login.pack()
 
     rg_lbl = tk.Label(tela_login, text='RG *')
     rg_lbl.pack()
@@ -83,6 +75,13 @@ def __criar_janela_login():
     rg_ent_login = tk.Entry(tela_login, textvariable=rg_verificar)
     rg_ent_login.pack()
 
+    pin_lbl = tk.Label(tela_login, text='PIN *')
+    pin_lbl.pack()
+
+    global pin_ent_login
+    pin_ent_login = tk.Entry(tela_login, show='*', textvariable=pin_verificar)
+    pin_ent_login.pack()
+
     tk.Label(tela_login, text="").pack()
 
     login_btn = tk.Button(tela_login, text='Login', height='2', width='30', command=__realizar_login)
@@ -90,11 +89,12 @@ def __criar_janela_login():
 
 
 def __realizar_login():
-    info_usuario = usuario_ent_login.get()
     info_rg = rg_ent_login.get()
-    cliente = Cliente(info_usuario, info_rg)
-    # Inserir bagulhos para logar cliente
-    messagebox.showinfo(title='Login', message='Login feito com sucesso!')
+    info_pin = pin_ent_login.get()
+    
+    if not autenticar_cliente(info_rg, info_pin):
+        messagebox.showinfo(title='Login', message='Login feito com sucesso!')
+        
     tela_login.destroy()
 
 def __criar_janela_cadastro():
@@ -105,16 +105,17 @@ def __criar_janela_cadastro():
 
     nome = tk.StringVar()
     rg = tk.StringVar()
+    pin = tk.StringVar()
 
     tk.Label(tela_cadastro, text="Insira as informações requisitadas", bg="blue", fg='white').pack()
     tk.Label(tela_cadastro, text="").pack()
 
-    usuario_lbl = tk.Label(tela_cadastro, text='Usuario *')
-    usuario_lbl.pack()
+    nome_lbl = tk.Label(tela_cadastro, text='Nome *')
+    nome_lbl.pack()
 
-    global usuario_ent_cadastro
-    usuario_ent_cadastro = tk.Entry(tela_cadastro, textvariable=nome)
-    usuario_ent_cadastro.pack()
+    global nome_ent_cadastro
+    nome_ent_cadastro = tk.Entry(tela_cadastro, textvariable=nome)
+    nome_ent_cadastro.pack()
 
     rg_lbl = tk.Label(tela_cadastro, text='RG *')
     rg_lbl.pack()
@@ -123,15 +124,24 @@ def __criar_janela_cadastro():
     rg_ent_cadastro = tk.Entry(tela_cadastro, textvariable=rg)
     rg_ent_cadastro.pack()
 
+    global pin_ent_cadastro
+    pin_lbl = tk.Label(tela_cadastro, text='PIN *')
+    pin_lbl.pack()
+
+    pin_ent_cadastro = tk.Entry(tela_cadastro, show='*',textvariable=pin)
+    pin_ent_cadastro.pack()
+
+
     tk.Label(tela_cadastro, text="").pack()
 
     cadastro_btn = tk.Button(tela_cadastro, text='Confirmar', height='2', width='30', command=__cadastrar_usuario)
     cadastro_btn.pack()
 
 def __cadastrar_usuario():
-    info_usuario = usuario_ent_cadastro.get()
+    info_nome = nome_ent_cadastro.get()
     info_rg = rg_ent_cadastro.get()
-    cliente = Cliente(info_usuario, info_rg)
+    info_pin = pin_ent_cadastro.get()
+    cliente = Cliente(info_nome, info_rg, info_pin)
     criar_cliente(cliente)
     messagebox.showinfo(title='Cadastro confirmado', message='Cliente cadastrado com sucesso!')
     tela_cadastro.destroy()
