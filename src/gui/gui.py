@@ -92,10 +92,12 @@ def __realizar_login():
     info_rg = rg_ent_login.get()
     info_pin = pin_ent_login.get()
     
-    if not autenticar_cliente(info_rg, info_pin):
-        messagebox.showinfo(title='Login', message='Login feito com sucesso!')
-        
-    tela_login.destroy()
+    if autenticar_cliente(info_rg, info_pin):
+        messagebox.showinfo(title='Login', message='Login feito com sucesso!')    
+        tela_login.destroy()
+    
+    messagebox.showwarning(title='Login', message="Usuário ou senha inválidos")
+    tela_login.focus_force()
 
 def __criar_janela_cadastro():
     global tela_cadastro
