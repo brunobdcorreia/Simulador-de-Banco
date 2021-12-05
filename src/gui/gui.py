@@ -2,7 +2,14 @@ from tkinter import messagebox
 from models.cliente import Cliente
 from db.database import criar_cliente, autenticar_cliente
 import tkinter as tk
+import sys, os
 from tkinter.messagebox import *
+
+currentdir = os.path.dirname(os.path.realpath(__file__))
+parentdir = os.path.dirname(currentdir)
+sys.path.append(parentdir)
+
+from client_module.client_layer import enviar_request_cadastro, enviar_request_login
 
 def init_gui(nome, cpf, saldo):
     window = tk.Tk("Banco")
@@ -92,12 +99,10 @@ def __realizar_login():
     info_rg = rg_ent_login.get()
     info_pin = pin_ent_login.get()
     
-    if autenticar_cliente(info_rg, info_pin):
-        messagebox.showinfo(title='Login', message='Login feito com sucesso!')    
-        tela_login.destroy()
-    
-    messagebox.showwarning(title='Login', message="Usuário ou senha inválidos")
-    tela_login.focus_force()
+    if not enviar_request_login(info_rg, info_pin):
+        __mostrar_janela_erro('Erro ao conectar')
+        
+    tela_login.destroy()
 
 def __criar_janela_cadastro():
     global tela_cadastro
@@ -143,11 +148,19 @@ def __cadastrar_usuario():
     info_nome = nome_ent_cadastro.get()
     info_rg = rg_ent_cadastro.get()
     info_pin = pin_ent_cadastro.get()
-    cliente = Cliente(info_nome, info_rg, info_pin)
-    criar_cliente(cliente)
-    messagebox.showinfo(title='Cadastro confirmado', message='Cliente cadastrado com sucesso!')
+    if enviar_request_cadastro(info_nome, info_rg, info_pin):
+        __mostrar_janela_sucesso('Usuário foi cadastrado!')
+    else:
+        __mostrar_janela_erro('Erro ao cadastrar!')
+    # messagebox.showinfo(title='Cadastro confirmado', message='Cliente cadastrado com sucesso!')
     tela_cadastro.destroy()
     #tela_cadastro.update()
+
+def __mostrar_janela_erro(mensagem):
+    messagebox.showerror(title='Erro!', message=mensagem)
+
+def __mostrar_janela_sucesso(mensagem):
+    messagebox.showinfo(title='Sucesso!', message=mensagem)
 
 def transferir():
     pass
