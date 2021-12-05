@@ -1,5 +1,7 @@
 from enum import Enum
 
 class Responses(Enum):
-    SUCCESS = '1'
-    FORBIDDEN = '2'
+    INTERNAL_ERROR = '0'
+    CONNECTED = '1'
+    SUCCESS = '2'
+    FORBIDDEN = '3'

@@ -1,11 +1,11 @@
 from enum import Enum
 
 class Requests(Enum):
-    CLOSECONNECTION = '0'
+    CLOSE_CONNECTION = '0'
     CADASTRO = '1'
     LOGIN = '2'
     SAQUE = '3'
     DEPOSITO  = '4'
     TRANSFERENCIA = '5'
-    OBTERLISTACLIENTES = '6'
-    CONSULTASALDO = '7'
+    OBTER_LISTA_CLIENTES = '6'
+    CONSULTA_SALDO = '7'

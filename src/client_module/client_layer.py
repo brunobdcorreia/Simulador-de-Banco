@@ -10,39 +10,36 @@ BUFFER_SIZE = 1024
 MENSAGEM_ERRO_DESCONHECIDO = 'Erro desconhecido'
 MENSAGEM_SERVIDOR_SEM_RESPOSTA = 'Erro de conexão com o servidor: sem resposta'
 
+
 def enviar_request_cadastro(nome, rg, pin):  
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:  
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
         try:
             client_socket.connect((host, porta))
 
-            if client_socket.recv(BUFFER_SIZE).decode('utf-8') == 'Bem vindo ao servidor':
+            if Responses(client_socket.recv(BUFFER_SIZE).decode('utf-8')) == Responses.CONNECTED:
                 request_cadastro = Requests.CADASTRO.value + '#' + nome + '#' + rg + '#' + pin
                 client_socket.send(str.encode(request_cadastro))
                 
-                resposta = client_socket.recv(BUFFER_SIZE).decode('utf-8');
+                resposta = client_socket.recv(BUFFER_SIZE).decode('utf-8')
                 status = Responses(resposta)
                 if status == Responses.SUCCESS: 
-                    client_socket.close()                     
-                    return (Responses.SUCCESS)
+                    return (Responses.SUCCESS,)
                 else:
-                    client_socket.close()
                     return (Responses.INTERNAL_ERROR, MENSAGEM_ERRO_DESCONHECIDO)
             else:
-                client_socket.close()
                 return (Responses.INTERNAL_ERROR, MENSAGEM_ERRO_DESCONHECIDO)
-
         except socket.error as error:
             print(str(error))
             return (Responses.INTERNAL_ERROR, str(error))
 
 def enviar_request_login(rg, pin):
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:  
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
         try:
-            client_socket.connect((host, porta))
-            if client_socket.recv(BUFFER_SIZE).decode('utf-8') == 'Bem vindo ao servidor':
+            client_socket.connect((host, porta))        
+            if Responses(client_socket.recv(BUFFER_SIZE).decode('utf-8')) == Responses.CONNECTED:
                 request_cadastro = Requests.LOGIN.value + '#' + rg + '#' + pin
                 client_socket.send(str.encode(request_cadastro))
-               
+                
                 resposta = client_socket.recv(BUFFER_SIZE).decode('utf-8')
                 resposta = resposta.split('#')
                 status = Responses(resposta[0])
@@ -50,6 +47,7 @@ def enviar_request_login(rg, pin):
                 if status == Responses.SUCCESS:
                     nome = resposta[1]
                     saldo = resposta[2]
+
                     return (Responses.SUCCESS, nome, saldo)
                 else:
                     return (Responses.INTERNAL_ERROR, MENSAGEM_ERRO_DESCONHECIDO)
@@ -60,11 +58,11 @@ def enviar_request_login(rg, pin):
             print(str(error))
             return (Responses.INTERNAL_ERROR, str(error))
             
-def enviar_request_saque(valor, rg):
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:  
-        try:
+def enviar_request_saque(valor, rg):  
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
+        try:    
             client_socket.connect((host, porta))
-            if client_socket.recv(BUFFER_SIZE).decode('utf-8') == 'Bem vindo ao servidor':
+            if Responses(client_socket.recv(BUFFER_SIZE).decode('utf-8')) == Responses.CONNECTED:        
                 request_saque = Requests.SAQUE.value + '#' + str(valor) + '#' + rg
                 client_socket.send(str.encode(request_saque))
                 resposta = client_socket.recv(BUFFER_SIZE).decode('utf-8')
@@ -77,8 +75,8 @@ def enviar_request_saque(valor, rg):
                     return (Responses.SUCCESS, novo_saldo)
                 else:
                     mensagem = resposta[1]
-                    return (status, mensagem)
-            else: 
+                    return (status, mensagem)           
+            else:
                 return (Responses.INTERNAL_ERROR, MENSAGEM_SERVIDOR_SEM_RESPOSTA)
 
         except socket.error as error:
@@ -86,10 +84,11 @@ def enviar_request_saque(valor, rg):
             return (Responses.INTERNAL_ERROR, str(error))
 
 def enviar_request_deposito(valor, rg):
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:  
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
         try:
+            print(client_socket)
             client_socket.connect((host, porta))
-            if client_socket.recv(BUFFER_SIZE).decode('utf-8') == 'Bem vindo ao servidor':
+            if Responses(client_socket.recv(BUFFER_SIZE).decode('utf-8')) == Responses.CONNECTED:        
                 request_saque = Requests.DEPOSITO.value + '#' + valor + '#' + rg
                 client_socket.send(str.encode(request_saque))
                 
@@ -103,18 +102,17 @@ def enviar_request_deposito(valor, rg):
                 else:
                     mensagem = resposta[1]
                     return (status, mensagem)
-            else: 
+            else:
                 return (Responses.INTERNAL_ERROR, MENSAGEM_SERVIDOR_SEM_RESPOSTA)
-
         except socket.error as error:
             print(str(error))
             return (Responses.INTERNAL_ERROR, str(error))
 
 def enviar_request_transferencia(valor, rg, rg_favorecido):
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:  
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
         try:
             client_socket.connect((host, porta))
-            if client_socket.recv(BUFFER_SIZE).decode('utf-8') == 'Bem vindo ao servidor':
+            if Responses(client_socket.recv(BUFFER_SIZE).decode('utf-8')) == Responses.CONNECTED:  
                 request_transf = Requests.TRANSFERENCIA.value + '#' + valor + '#' + rg + '#' + rg_favorecido
                 client_socket.send(str.encode(request_transf))
                 
@@ -129,19 +127,18 @@ def enviar_request_transferencia(valor, rg, rg_favorecido):
                 else:
                     # Retorno o erro e a mensagem
                     return resposta
-            else: 
-                return (Responses.INTERNAL_ERROR, MENSAGEM_SERVIDOR_SEM_RESPOSTA)
-
+            else:
+                return (Responses.INTERNAL_ERROR, MENSAGEM_SERVIDOR_SEM_RESPOSTA)  
         except socket.error as error:
             print(str(error))
             return (Responses.INTERNAL_ERROR, str(error))
 
 def consultar_saldo_request(rg):
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:  
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
         try:
             client_socket.connect((host, porta))
-            if client_socket.recv(BUFFER_SIZE).decode('utf-8') == 'Bem vindo ao servidor':
-                request_consulta = Requests.CONSULTASALDO.value + '#' + rg
+            if Responses(client_socket.recv(BUFFER_SIZE).decode('utf-8')) == Responses.CONNECTED:
+                request_consulta = Requests.CONSULTA_SALDO.value + '#' + rg
                 client_socket.send(str.encode(request_consulta))
                 
                 resposta = client_socket.recv(BUFFER_SIZE).decode('utf-8')
@@ -152,21 +149,21 @@ def consultar_saldo_request(rg):
                     saldo = resposta[1]
                     return (Responses.SUCCESS, saldo)
                 else:
-                    # Retorno o erro e a mensagem
-                    return resposta
+                    mensagem = resposta[1]
+                    return (status, mensagem)
             else: 
                 return (Responses.INTERNAL_ERROR, MENSAGEM_SERVIDOR_SEM_RESPOSTA)
-
+                
         except socket.error as error:
-            print(str(error))
-            return (Responses.INTERNAL_ERROR, str(error))
+                print(str(error))
+                return (Responses.INTERNAL_ERROR, str(error))
 
 def obter_lista_clientes():
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:  
-        try:
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
+        try:  
             client_socket.connect((host, porta))
-            if client_socket.recv(BUFFER_SIZE).decode('utf-8') == 'Bem vindo ao servidor':                
-                request = Requests.OBTERLISTACLIENTES.value
+            if Responses(client_socket.recv(BUFFER_SIZE).decode('utf-8')) == Responses.CONNECTED:             
+                request = Requests.OBTER_LISTA_CLIENTES.value
                 client_socket.send(str.encode(request))
                 
                 resposta = client_socket.recv(BUFFER_SIZE).decode('utf-8')
@@ -192,9 +189,9 @@ def obter_lista_clientes():
                     return (Responses.SUCCESS, listaClientes)
                 else:
                     return (Responses.INTERNAL_ERROR, MENSAGEM_ERRO_DESCONHECIDO)
-            else:
+            else: 
                 return (Responses.INTERNAL_ERROR, MENSAGEM_SERVIDOR_SEM_RESPOSTA)
-                
+                    
         except socket.error as error:
             print(str(error))
             return (Responses.INTERNAL_ERROR, str(error))

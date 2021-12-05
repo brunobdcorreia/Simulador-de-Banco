@@ -25,13 +25,13 @@ print('Aguardando conexão...')
 server_socket.listen(5)
 
 def gerenciar_cliente_thread(conexao, endereco):
-    conexao.send(str.encode('Bem vindo ao servidor'))
+    conexao.send(str.encode(Responses.CONNECTED.value))
     while True:
         data = conexao.recv(2048)
         req = data.decode('utf-8')
         req_header = str(req).split('#')
 
-        if not data:
+        if not data: 
             break
 
         handle_request(req_header, conexao, endereco)
@@ -105,11 +105,11 @@ def handle_request(req, conn, endereco):
             atualizar_saldo(saldo_novo_favorecido, rg_favorecido)
             conn.send(str.encode(Responses.SUCCESS.value + '#' + str(saldo_novo) + '#' + str(saldo_novo_favorecido)))
 
-    elif Requests(req[0]) == Requests.OBTERLISTACLIENTES:
+    elif Requests(req[0]) == Requests.OBTER_LISTA_CLIENTES:
         clientes = get_rg_nomes_clientes()
         conn.send(str.encode(Responses.SUCCESS.value + '#' + str(clientes)))
 
-    elif Requests(req[0]) == Requests.CONSULTASALDO:
+    elif Requests(req[0]) == Requests.CONSULTA_SALDO:
         saldo = get_saldo(req[1])
         print("Consulta saldo retornou: {}".format(saldo))
         conn.send(str.encode(Responses.SUCCESS.value + '#' + str(saldo)))
