@@ -6,6 +6,7 @@ parentdir = os.path.dirname(currentdir)
 sys.path.append(parentdir)
 from db.database import *
 from models.cliente import *
+from enums.requests import Requests
 
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 host = '127.0.0.1'
@@ -27,31 +28,40 @@ def gerenciar_cliente_thread(conexao, endereco):
     while True:
         data = conexao.recv(2048)
         req = data.decode('utf-8')
-        req_header = str(req).split('.')
-        handle_request(req_header, conexao, endereco)
+        req_header = str(req).split('#')
 
         if not data:
-            print('data is null')
             break
-    print('Servidor vai fechar a conexao')
+
+        handle_request(req_header, conexao, endereco)
     
     conexao.close()
 
 def handle_request(req, conn, endereco):
-    if req[0] == 'cadastro':
+    if req[0] == Requests.CADASTRO.value:
         cliente = Cliente(req[1], req[2], req[3])
         criar_cliente(cliente)
-        conn.sendall(str.encode('ok'))
-    elif req[0] == 'login':
+        conn.send(str.encode('ok'))
+    elif req[0] == Requests.LOGIN.value:
         if not autenticar_cliente(req[1], req[2]):
             print('Login com sucesso')
             print(conn.getsockname())
             print(conn.getpeername())
             print('Mandando para', conn.getsockname())
-            conn.sendall(str.encode('sucesso'))
+            info_cliente = get_nome_cliente(req[1])
+            conn.send(str.encode(info_cliente[0] + '#' + str(info_cliente[1])))
         else:
             print('Login falhou')
             conn.send(str.encode('falha'))
+    elif req[0] == Requests.SAQUE.value:
+        print("Recebeu request de saque")
+        resposta = atualizar_saldo(req[1], req[2])
+        print(type(resposta))
+    elif req[0] == Requests.OBTERLISTACLIENTES.value:
+        # TODO : Tratar retorno da lista de clientes
+        clientes = get_nomes_rg_clientes()
+        print(str(clientes))
+        
 
 while True:
     client_socket, endereco = server_socket.accept()
