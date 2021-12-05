@@ -39,12 +39,12 @@ def gerenciar_cliente_thread(conexao, endereco):
     conexao.close()
 
 def handle_request(req, conn, endereco):
-    if req[0] == Requests.CADASTRO.value:
+    if Requests(req[0]) == Requests.CADASTRO:
         cliente = Cliente(req[1], req[2], req[3])
         criar_cliente(cliente)
         conn.send(str.encode('ok'))
 
-    elif req[0] == Requests.LOGIN.value:
+    elif Requests(req[0]) == Requests.LOGIN:
         if not autenticar_cliente(req[1], req[2]):
             print('Login com sucesso')
             print(conn.getsockname())
@@ -56,29 +56,53 @@ def handle_request(req, conn, endereco):
             print('Login falhou')
             conn.send(str.encode('falha'))
 
-    elif req[0] == Requests.SAQUE.value:
-        valor = req[1]
+    elif Requests(req[0]) == Requests.SAQUE:
+        valor = float(req[1])
         rg = req[2]
         
-        saldoAtual = get_saldo(rg)
+        saldo_atual = get_saldo(rg)
 
         # Verifica se há saldo
-        if saldoAtual < valor:
+        if saldo_atual < valor:
             conn.send(str.encode(Responses.FORBIDDEN.value + '#' + 'Saldo insuficiente'))
         else:
             # Realiza o saque
-            atualizar_saldo(saldoAtual - valor, rg)
-            conn.send(str.encode(Responses.SUCCESS.value))
+            saldo_novo = saldo_atual - valor
+            atualizar_saldo(saldo_novo, rg)
+            conn.send(str.encode(Responses.SUCCESS.value + '#' + str(saldo_novo)))
 
-    elif req[0] == Requests.DEPOSITO.value:
-        valor = req[1]
+    elif Requests(req[0]) == Requests.DEPOSITO:
+        valor = float(req[1])
         rg = req[2]
         
-        # Realiza o saque
-        atualizar_saldo(valor, rg)
-        conn.send(str.encode(Responses.SUCCESS.value))
+        saldo_atual = get_saldo(rg)
+        saldo_novo = saldo_atual + valor
+        
+        # Realiza o depósito
+        atualizar_saldo(saldo_novo, rg)
 
-    elif req[0] == Requests.OBTERLISTACLIENTES.value:
+        #TODO: Tirar debug
+        print('Saldo pós depósito: ' + str(get_saldo(rg)))
+        conn.send(str.encode(Responses.SUCCESS.value + '#' + str(saldo_novo)))
+
+    elif Requests(req[0]) == Requests.TRANSFERENCIA:
+        valor = float(req[1])
+        rg = req[2]
+        rg_favorecido = req[3]
+
+        saldo_atual = get_saldo(rg)
+        saldo_atual_favorecido = get_saldo(rg_favorecido)
+
+        if saldo_atual < valor:
+            conn.send(str.encode(Responses.FORBIDDEN.value + '#' + 'Saldo insuficiente'))
+        else:
+            saldo_novo = saldo_atual - valor
+            atualizar_saldo(saldo_novo, rg)
+            saldo_novo_favorecido = saldo_atual_favorecido + valor
+            atualizar_saldo(saldo_novo_favorecido, rg_favorecido)
+            conn.send(str.encode(Responses.SUCCESS.value + '#' + str(saldo_novo) + '#' + str(saldo_novo_favorecido)))
+
+    elif Requests(req[0]) == Requests.OBTERLISTACLIENTES:
         # TODO : Tratar retorno da lista de clientes
         clientes = get_rg_nomes_clientes()
         print(str(clientes))

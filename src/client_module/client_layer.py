@@ -56,18 +56,21 @@ def enviar_request_saque(valor, rg):
         try:
             client_socket.connect((host, porta))
             if client_socket.recv(BUFFER_SIZE).decode('utf-8') == 'Bem vindo ao servidor':
-                request_saque = Requests.SAQUE.value + '#' + valor + '#' + rg
+                request_saque = Requests.SAQUE.value + '#' + str(valor) + '#' + rg
                 client_socket.send(str.encode(request_saque))
                 resposta = client_socket.recv(BUFFER_SIZE).decode('utf-8')
+                
+                resposta = resposta.split('#')
+                status = Responses(resposta[0])
 
-                if resposta == Responses.SUCCESS:
-                    return (True,)
+                if status == Responses.SUCCESS:
+                    novo_saldo = resposta[1]
+                    return (Responses.SUCCESS, novo_saldo)
                 else:
-                    resposta = resposta.split('#')
                     mensagem = resposta[1]
-                    return(False, mensagem)
+                    return (status, mensagem)
             else: 
-                return (False, MENSAGEM_SERVIDOR_SEM_RESPOSTA)
+                return (Responses.INTERNAL_ERROR, MENSAGEM_SERVIDOR_SEM_RESPOSTA)
 
         except socket.error as error:
             print(str(error))
@@ -79,12 +82,41 @@ def enviar_request_deposito(valor, rg):
             if client_socket.recv(BUFFER_SIZE).decode('utf-8') == 'Bem vindo ao servidor':
                 request_saque = Requests.DEPOSITO.value + '#' + valor + '#' + rg
                 client_socket.send(str.encode(request_saque))
+                
                 resposta = client_socket.recv(BUFFER_SIZE).decode('utf-8')
+                resposta = resposta.split('#')
 
-                if resposta == Responses.SUCCESS.value:
-                    return (Responses.SUCCESS,)
+                status = Responses(resposta[0])
+                if status == Responses.SUCCESS:
+                    novo_saldo = resposta[1]
+                    return (Responses.SUCCESS, novo_saldo)
                 else:
-                    resposta = resposta.split('#')
+                    mensagem = resposta[1]
+                    return (status, mensagem)
+            else: 
+                return (Responses.INTERNAL_ERROR, MENSAGEM_SERVIDOR_SEM_RESPOSTA)
+
+        except socket.error as error:
+            print(str(error))
+
+def enviar_request_transferencia(valor, rg, rg_favorecido):
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:  
+        try:
+            client_socket.connect((host, porta))
+            if client_socket.recv(BUFFER_SIZE).decode('utf-8') == 'Bem vindo ao servidor':
+                request_transf = Requests.TRANSFERENCIA.value + '#' + valor + '#' + rg + '#' + rg_favorecido
+                client_socket.send(str.encode(request_transf))
+                
+                resposta = client_socket.recv(BUFFER_SIZE).decode('utf-8')
+                resposta = resposta.split('#')
+
+                status = resposta[0] 
+                if status == Responses.SUCCESS.value:
+                    novo_saldo = resposta[1]
+                    novo_saldo_favorecido = resposta[2]
+                    return (Responses.SUCCESS, novo_saldo, novo_saldo_favorecido)
+                else:
+                    # Retorno o erro e a mensagem
                     return resposta
             else: 
                 return (Responses.INTERNAL_ERROR, MENSAGEM_SERVIDOR_SEM_RESPOSTA)

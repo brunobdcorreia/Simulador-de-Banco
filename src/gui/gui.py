@@ -15,7 +15,8 @@ from client_module.client_layer import *
 
 # TODO : Revisar variáveis globais
 def __criar_janela_principal(nome, rg, saldo):
-    try:        
+    try:       
+        global tela_principal 
         tela_principal, frm_principal = __criar_janela(titulo='Área principal', adicionarLabel=True, principal=True)
         frm_sub = tk.Frame(master=frm_principal, relief=tk.RIDGE, borderwidth=5)
 
@@ -23,11 +24,10 @@ def __criar_janela_principal(nome, rg, saldo):
         frm_menu = tk.Frame(master=frm_sub, relief=tk.RIDGE, borderwidth=5)
         lbl_dados = tk.Label(master=frm_menu, text="Dados do cliente")
         lbl_nome = tk.Label(master=frm_menu, text="Nome: " + nome)
-        lbl_rg = tk.Label(master=frm_menu, text= "rg: " + rg)
+        lbl_rg = tk.Label(master=frm_menu, text= "RG: " + rg)
         
-        global saldo_atual
-        saldo_atual = saldo
-        lbl_saldo = tk.Label(master=frm_menu, text="Saldo: " + str(saldo_atual))
+        global lbl_saldo
+        lbl_saldo = tk.Label(master=frm_menu, text='Saldo: ' + str(saldo))
 
         # Criar submenu a direita com botões para transferir e realizar saque
         btn_transferir = tk.Button(master=frm_sub, text="Transferencia", command=lambda: __mostrar_janela_transferir(rg))
@@ -201,7 +201,8 @@ def __mostrar_janela_transferir(rg):
         # Removendo o cliente que é o próximo que está logado
         clientes = [cliente for cliente in clientes if not rg in cliente]
 
-        _, frm_principal = __criar_janela(titulo='Transferir', adicionarLabel=False)
+        global tela_transferir
+        tela_transferir, frm_principal = __criar_janela(titulo='Transferir', adicionarLabel=False)
 
         # Dropdown para selecionar o cliente que receberá o valor
         transferir_cliente_selecionado = StringVar(frm_principal)
@@ -211,14 +212,16 @@ def __mostrar_janela_transferir(rg):
         # Input para transferir o valor
         transferir_valor_lbl = tk.Label(master=frm_principal, text="Valor para transferência (R$)")
         transferir_valor = tk.Entry(frm_principal)
+        global erro_valor_transferencia_label
+        erro_valor_transferencia_label = tk.Label(master=frm_principal, fg='red', text='')
         transferir_botao = tk.Button(frm_principal, 
                                 text='Transferir', 
                                 height='2', 
                                 width='10', 
                                 bg='green', 
                                 command=lambda: 
-                                        __transferir(rg,
-                                                    transferir_valor.get(), 
+                                        __transferir(transferir_valor.get(),
+                                                    rg, 
                                                     transferir_cliente_selecionado.get()))                               
 
         # Construção da página
@@ -227,22 +230,46 @@ def __mostrar_janela_transferir(rg):
         tk.Label(master=frm_principal, text='').pack()
         transferir_valor_lbl.pack()
         transferir_valor.pack()
+        erro_valor_transferencia_label.pack()
         tk.Label(master=frm_principal, text='').pack()
         transferir_botao.pack()
     except Exception as e:
         print(e)
         __mostrar_janela_erro(e)
 
-def __transferir(rg, valor, clienteSelecionado):
+def __transferir(valor, rg, favorecido_selecionado):
     try:
-        pass
+        # "RG - NOME"
+        if __validar_numero(valor):
+            rg_favorecido = favorecido_selecionado.split(' - ')[0]
+            print('Transferindo para o RG: ' + rg_favorecido)
+            resposta = enviar_request_transferencia(valor, rg, rg_favorecido)
+
+            status = resposta[0]
+
+            if status != Responses.SUCCESS:
+                mensagem = resposta[1]
+                if status == Responses.INTERNAL_ERROR:
+                    raise ValueError(mensagem)
+                elif status == Responses.FORBIDDEN:
+                    __mostrar_janela_alerta(mensagem)
+            else:
+                __mostrar_janela_sucesso('Transferencia realizada com sucesso!')
+                tela_transferir.destroy()
+
+                novoSaldo = resposta[1]
+                __atualizar_saldo(novoSaldo)
+        else:
+            erro_valor_transferencia_label.config(text='Valor inválido')           
+        
     except Exception as e:
         print(e)
         __mostrar_janela_erro(e)
 
 def __mostrar_tela_saque(rg):
     try:
-        _, frm_principal = __criar_janela(titulo='Saque', adicionarLabel=False)
+        global tela_saque
+        tela_saque, frm_principal = __criar_janela(titulo='Saque', adicionarLabel=False)
 
         # Cabeçalho da janela
         info_label = tk.Label(master=frm_principal, text='Insira o valor a ser sacado:', bg='blue', fg='white')
@@ -251,9 +278,17 @@ def __mostrar_tela_saque(rg):
         global ent_valor_para_saque
         valor_lbl = tk.Label(master=frm_principal, text='Valor')
         ent_valor_para_saque = tk.Entry(frm_principal)
+        global erro_valor_saque_label
+        erro_valor_saque_label = tk.Label(master=frm_principal, fg='red', text='')
 
         # Botão realizar saque
-        saque_botao = tk.Button(master=frm_principal, text='Confirmar', height='2', width='10', command=lambda: enviar_request_saque(ent_valor_para_saque.get(), rg))
+        saque_botao = tk.Button(master=frm_principal, 
+                                text='Confirmar', 
+                                height='2', 
+                                width='10', 
+                                command=lambda: __realizar_saque(
+                                                    ent_valor_para_saque.get(),
+                                                    rg))
 
         # Construção da página
         frm_principal.pack()
@@ -261,8 +296,34 @@ def __mostrar_tela_saque(rg):
         tk.Label(master=frm_principal, text='').pack()
         valor_lbl.pack()
         ent_valor_para_saque.pack()
+        erro_valor_saque_label.pack()
         tk.Label(master=frm_principal, text='').pack()
         saque_botao.pack()
+
+    except Exception as e:
+        print(e)
+        __mostrar_janela_erro(e)
+
+def __realizar_saque(valor, rg):
+    try:
+        if __validar_numero(valor):
+            resposta = enviar_request_saque(valor, rg)
+            
+            status = resposta[0]
+            if status != Responses.SUCCESS:
+                mensagem = resposta[1]
+                if status == Responses.INTERNAL_ERROR:
+                    raise ValueError(mensagem)
+                elif status == Responses.FORBIDDEN:
+                    __mostrar_janela_alerta(mensagem)
+            else:
+                __mostrar_janela_sucesso('Saque realizado com sucesso!')
+                tela_saque.destroy()
+
+                novoSaldo = resposta[1]
+                __atualizar_saldo(novoSaldo)
+        else:
+            erro_valor_saque_label.config(text='Valor inválido')
 
     except Exception as e:
         print(e)
@@ -279,6 +340,8 @@ def __mostrar_tela_deposito(rg):
         # Input valor para depósito
         valor_lbl = tk.Label(master=frm_principal, text='Valor')
         ent_valor_para_deposito = tk.Entry(frm_principal)
+        global erro_valor_deposito_label
+        erro_valor_deposito_label = tk.Label(master=frm_principal, fg='red', text='')
 
         # Botão realizar depósito
         deposito_botao = tk.Button(master=frm_principal, text='Confirmar', height='2', width='10', command=lambda: __realizar_deposito(ent_valor_para_deposito.get(), rg))
@@ -289,6 +352,7 @@ def __mostrar_tela_deposito(rg):
         tk.Label(master=frm_principal, text='').pack()
         valor_lbl.pack()
         ent_valor_para_deposito.pack()
+        erro_valor_deposito_label.pack()
         tk.Label(master=frm_principal, text='').pack()
         deposito_botao.pack()
 
@@ -298,18 +362,24 @@ def __mostrar_tela_deposito(rg):
 
 def __realizar_deposito(valor, rg):
     try:
-        resposta = enviar_request_deposito(valor, rg)
-        status = resposta[0]
+        if __validar_numero(valor):
+            resposta = enviar_request_deposito(valor, rg)
+            
+            status = resposta[0]
+            if status != Responses.SUCCESS:
+                mensagem = resposta[1]
+                if status == Responses.INTERNAL_ERROR:
+                    raise ValueError(mensagem)
+                elif status == Responses.FORBIDDEN:
+                    __mostrar_janela_alerta(mensagem)
+            else:
+                __mostrar_janela_sucesso('Depósito realizado com sucesso!')
+                tela_deposito.destroy()
 
-        if status != Responses.SUCCESS:
-            mensagem = resposta[1]
-            if status == Responses.INTERNAL_ERROR:
-                raise ValueError(mensagem)
-            elif status == Responses.FORBIDDEN:
-                __mostrar_janela_alerta(mensagem)
+                novoSaldo = resposta[1]
+                __atualizar_saldo(novoSaldo)
         else:
-            __mostrar_janela_sucesso('Depósito realizado com sucesso!')
-            tela_deposito.destroy()
+            erro_valor_deposito_label.config(text='Valor inválido')
             
 
     except Exception as e:
@@ -318,7 +388,8 @@ def __realizar_deposito(valor, rg):
 
 # Utilitários
 def __atualizar_saldo(novoSaldo):
-    saldo_atual = novoSaldo
+    lbl_saldo['text'] = 'Saldo: ' + novoSaldo
+    tela_principal.update()
 
 def __mostrar_janela_erro(mensagem):
     messagebox.showerror(title='Erro!', message=mensagem)
@@ -348,3 +419,10 @@ def __criar_janela(titulo, adicionarLabel, principal = False):
 
 def __criar_label_padrao(frameMaster):
     tk.Label(frameMaster, text="Banco do Bruhsil", bg="blue", width="300", height="2", font=("Calibri", 13), fg='white').pack()
+
+def __validar_numero(valor):
+    try:
+        float(valor)
+        return True
+    except ValueError:
+        return False
