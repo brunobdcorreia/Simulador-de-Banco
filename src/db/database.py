@@ -30,7 +30,6 @@ def criar_cliente(cliente):
 
         if not __check_cliente_nome(cliente.get_nome()):
             cur.execute(''' INSERT INTO clientes VALUES (?,?,?,?) ''', info_cliente)
-            print("Cliente com as informacoes: {}, {}, {}, {} foi inserido no banco de dados".format(info_cliente[0], info_cliente[1], info_cliente[2], info_cliente[3]))
 
         con.commit()        
 
@@ -43,7 +42,6 @@ def autenticar_cliente(rg, pin):
             cur.execute(''' SELECT count(*) FROM clientes WHERE rg=? AND pin=? ''', (rg, pin))
         
         query_result = cur.fetchall()
-        print(query_result)
 
         if query_result is not None:
             authentication_failed = False

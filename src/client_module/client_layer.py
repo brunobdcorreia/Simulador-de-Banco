@@ -86,7 +86,6 @@ def enviar_request_saque(valor, rg):
 def enviar_request_deposito(valor, rg):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
         try:
-            print(client_socket)
             client_socket.connect((host, porta))
             if Responses(client_socket.recv(BUFFER_SIZE).decode('utf-8')) == Responses.CONNECTED:        
                 request_saque = Requests.DEPOSITO.value + '#' + valor + '#' + rg
@@ -119,14 +118,14 @@ def enviar_request_transferencia(valor, rg, rg_favorecido):
                 resposta = client_socket.recv(BUFFER_SIZE).decode('utf-8')
                 resposta = resposta.split('#')
 
-                status = resposta[0] 
-                if status == Responses.SUCCESS.value:
+                status = Responses(resposta[0])
+                if status == Responses.SUCCESS:
                     novo_saldo = resposta[1]
                     novo_saldo_favorecido = resposta[2]
                     return (Responses.SUCCESS, novo_saldo, novo_saldo_favorecido)
                 else:
-                    # Retorno o erro e a mensagem
-                    return resposta
+                    mensagem = resposta[1]
+                    return (status, mensagem)
             else:
                 return (Responses.INTERNAL_ERROR, MENSAGEM_SERVIDOR_SEM_RESPOSTA)  
         except socket.error as error:

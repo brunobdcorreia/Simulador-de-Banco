@@ -21,7 +21,6 @@ try:
 except socket.error as error:
     print(str(error))
 
-print('Aguardando conexão...')
 server_socket.listen(5)
 
 def gerenciar_cliente_thread(conexao, endereco):
@@ -34,11 +33,11 @@ def gerenciar_cliente_thread(conexao, endereco):
         if not data: 
             break
 
-        handle_request(req_header, conexao, endereco)
+        handle_request(req_header, conexao)
     
     conexao.close()
 
-def handle_request(req, conn, endereco):
+def handle_request(req, conn):
     if Requests(req[0]) == Requests.CADASTRO:
         cliente = Cliente(
             nome=req[1], 
@@ -49,15 +48,10 @@ def handle_request(req, conn, endereco):
 
     elif Requests(req[0]) == Requests.LOGIN:
         if not autenticar_cliente(req[1], req[2]):
-            print('Login com sucesso')
-            print(conn.getsockname())
-            print(conn.getpeername())
-            print('Mandando para', conn.getsockname())
             cliente_nome, cliente_saldo = get_nome_cliente(req[1])
             conn.send(str.encode(Responses.SUCCESS.value + '#' + cliente_nome + '#' + str(cliente_saldo)))
         else:
-            print('Login falhou')
-            conn.send(str.encode('falha'))
+            conn.send(str.encode(Responses.FORBIDDEN, 'Dados de usuário incorretos'))
 
     elif Requests(req[0]) == Requests.SAQUE:
         valor = float(req[1])
@@ -83,9 +77,6 @@ def handle_request(req, conn, endereco):
         
         # Realiza o depósito
         atualizar_saldo(saldo_novo, rg)
-
-        #TODO: Tirar debug
-        print('Saldo pós depósito: ' + str(get_saldo(rg)))
         conn.send(str.encode(Responses.SUCCESS.value + '#' + str(saldo_novo)))
 
     elif Requests(req[0]) == Requests.TRANSFERENCIA:
@@ -111,15 +102,12 @@ def handle_request(req, conn, endereco):
 
     elif Requests(req[0]) == Requests.CONSULTA_SALDO:
         saldo = get_saldo(req[1])
-        print("Consulta saldo retornou: {}".format(saldo))
         conn.send(str.encode(Responses.SUCCESS.value + '#' + str(saldo)))
         
 
 while True:
     client_socket, endereco = server_socket.accept()
-    print('Conectado a: ' + endereco[0] + ': ' + str(endereco[1]))
     start_new_thread(gerenciar_cliente_thread, (client_socket, endereco))
     cont_thread += 1
-    print('Numero de threads: ' + str(cont_thread))
 
 server_socket.close()

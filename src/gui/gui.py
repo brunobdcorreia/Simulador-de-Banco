@@ -13,7 +13,6 @@ WINDOW_DIMENSIONS = '300x250'
 
 from client_module.client_layer import *
 
-# TODO : Revisar variáveis globais
 def __criar_janela_principal(nome, rg, saldo):
     try:       
         global janela_principal 
@@ -199,7 +198,6 @@ def __cadastrar_usuario():
         __mostrar_janela_erro(e)
 
 def __mostrar_janela_transferir(rg):
-    # TODO: Validar se o cliente foi selecionado antes de transferir
     try:
         resposta_obter_clientes = obter_lista_clientes()
         status = resposta_obter_clientes[0]
@@ -218,6 +216,8 @@ def __mostrar_janela_transferir(rg):
         transferir_cliente_selecionado = StringVar(frm_principal)
         transferir_cliente_selecionado.set('Selecione um cliente')
         transferir_cliente_selecionado_optionMenu = tk.OptionMenu(frm_principal, transferir_cliente_selecionado, *clientes)
+        global erro_cliente_selecionado_label
+        erro_cliente_selecionado_label = tk.Label(master=frm_principal, fg='red', text='')
 
         # Input para transferir o valor
         transferir_valor_lbl = tk.Label(master=frm_principal, text="Valor para transferência (R$)")
@@ -236,6 +236,7 @@ def __mostrar_janela_transferir(rg):
 
         # Construção da página
         frm_principal.pack()
+        erro_cliente_selecionado_label.pack()
         transferir_cliente_selecionado_optionMenu.pack()    
         tk.Label(master=frm_principal, text='').pack()
         transferir_valor_lbl.pack()
@@ -250,24 +251,26 @@ def __mostrar_janela_transferir(rg):
 def __transferir(valor, rg, favorecido_selecionado):
     try:
         if __validar_numero(valor):
-            rg_favorecido = favorecido_selecionado.split(' - ')[0]
-            print('Transferindo para o RG: ' + rg_favorecido)
-            resposta = enviar_request_transferencia(valor, rg, rg_favorecido)
-
-            status = resposta[0]
-
-            if status != Responses.SUCCESS:
-                mensagem = resposta[1]
-                if status == Responses.INTERNAL_ERROR:
-                    raise ValueError(mensagem)
-                elif status == Responses.FORBIDDEN:
-                    __mostrar_janela_alerta(mensagem)
+            if favorecido_selecionado == 'Selecione um cliente':
+                erro_cliente_selecionado_label.config(text='É preciso selecionar o cliente')
             else:
-                __mostrar_janela_sucesso('Transferencia realizada com sucesso!')
-                tela_transferir.destroy()
+                rg_favorecido = favorecido_selecionado.split(' - ')[0]
+                resposta = enviar_request_transferencia(valor, rg, rg_favorecido)
 
-                novo_saldo = resposta[1]
-                __atualizar_saldo(novo_saldo)
+                status = resposta[0]
+
+                if status != Responses.SUCCESS:
+                    mensagem = resposta[1]
+                    if status == Responses.INTERNAL_ERROR:
+                        raise ValueError(mensagem)
+                    elif status == Responses.FORBIDDEN:
+                        __mostrar_janela_alerta(mensagem)
+                else:
+                    __mostrar_janela_sucesso('Transferencia realizada com sucesso!')
+                    tela_transferir.destroy()
+
+                    novo_saldo = resposta[1]
+                    __atualizar_saldo(novo_saldo)
         else:
             erro_valor_transferencia_label.config(text='Valor inválido')           
         
@@ -417,7 +420,7 @@ def __mostrar_janela_sucesso(mensagem):
     messagebox.showinfo(title='Sucesso!', message=mensagem)
 
 def __mostrar_janela_alerta(mensagem):
-    messagebox.showwarning(title='Aviso', mensagem=mensagem)
+    messagebox.showwarning(title='Aviso', message=mensagem)
 
 def __criar_janela(titulo, adicionarLabel, principal = False):
     if principal:
