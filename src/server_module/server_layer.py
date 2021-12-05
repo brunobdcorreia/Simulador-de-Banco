@@ -109,5 +109,3 @@ while True:
     client_socket, endereco = server_socket.accept()
     start_new_thread(gerenciar_cliente_thread, (client_socket, endereco))
     cont_thread += 1
-
-server_socket.close()
