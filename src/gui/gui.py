@@ -16,8 +16,8 @@ from client_module.client_layer import *
 # TODO : Revisar variáveis globais
 def __criar_janela_principal(nome, rg, saldo):
     try:       
-        global tela_principal 
-        tela_principal, frm_principal = __criar_janela(titulo='Área principal', adicionarLabel=True, principal=True)
+        global janela_principal 
+        janela_principal, frm_principal = __criar_janela(titulo='Área principal', adicionarLabel=True, principal=True)
         frm_sub = tk.Frame(master=frm_principal, relief=tk.RIDGE, borderwidth=5)
 
         # Criar submenu a esquerda com nome, rg e saldo
@@ -33,10 +33,12 @@ def __criar_janela_principal(nome, rg, saldo):
         btn_transferir = tk.Button(master=frm_sub, text="Transferencia", command=lambda: __mostrar_janela_transferir(rg))
         saque_botao = tk.Button(master=frm_sub, text="Saque", command=lambda: __mostrar_tela_saque(rg))
         deposito_botao = tk.Button(master=frm_sub, text="Depósito", command=lambda: __mostrar_tela_deposito(rg))
+        atualizar_botao = tk.Button(master=frm_principal, text='Atualizar', command=lambda: __atualizar_saldo(__consultar_saldo(rg)))
 
         btn_transferir.pack(side=tk.RIGHT)
         saque_botao.pack(side=tk.RIGHT)
         deposito_botao.pack(side=tk.RIGHT)
+        atualizar_botao.pack()
         lbl_dados.pack()
         lbl_nome.pack()
         lbl_rg.pack()
@@ -47,10 +49,10 @@ def __criar_janela_principal(nome, rg, saldo):
         frm_principal.pack(side=tk.TOP)
 
         # Fecha a tela de login/cadastro
-        tela_inicio.destroy()
+        tela_inicio.withdraw()
 
         # Definir nova principal
-        tela_principal.mainloop()        
+        janela_principal.mainloop()        
     except Exception as e:
         print(e)
         __mostrar_janela_erro(e)
@@ -123,11 +125,14 @@ def __realizar_login():
         
         resposta_login = enviar_request_login(info_rg, info_pin)
 
-        assert resposta_login[0], 'Erro ao conectar!'
+        status = resposta_login[0]
+        assert status != Responses.INTERNAL_ERROR, resposta_login[1] # Resposta_login[1] é a mensagem sobre o erro
 
         tela_login.destroy()
-        info_cliente = resposta_login[1]
-        __criar_janela_principal(info_cliente[0], info_rg, info_cliente[1])
+        
+        nome = resposta_login[1]
+        saldo = resposta_login[2]
+        __criar_janela_principal(nome, info_rg, saldo)
     except Exception as e:
         print(e)
         __mostrar_janela_erro(e)
@@ -182,7 +187,9 @@ def __cadastrar_usuario():
         info_rg = rg_ent_cadastro.get()
         info_pin = pin_ent_cadastro.get()
         
-        assert enviar_request_cadastro(info_nome, info_rg, info_pin), 'Erro ao cadastrar!'
+        resposta = enviar_request_cadastro(info_nome, info_rg, info_pin)
+        status = resposta[0]
+        assert status != Responses.INTERNAL_ERROR, resposta[1] # Resposta[1] é a mensagem
            
         __mostrar_janela_sucesso('Usuário foi cadastrado!')
         
@@ -192,10 +199,13 @@ def __cadastrar_usuario():
         __mostrar_janela_erro(e)
 
 def __mostrar_janela_transferir(rg):
+    # TODO: Validar se o cliente foi selecionado antes de transferir
     try:
         resposta_obter_clientes = obter_lista_clientes()
-
-        assert resposta_obter_clientes[0], "Erro ao carregar lista dos clientes. Por favor, tente novamente."
+        status = resposta_obter_clientes[0]
+        
+        assert status != Responses.INTERNAL_ERROR, "Erro ao carregar lista dos clientes. Por favor, tente novamente."
+        
         clientes = resposta_obter_clientes[1]
 
         # Removendo o cliente que é o próximo que está logado
@@ -239,7 +249,6 @@ def __mostrar_janela_transferir(rg):
 
 def __transferir(valor, rg, favorecido_selecionado):
     try:
-        # "RG - NOME"
         if __validar_numero(valor):
             rg_favorecido = favorecido_selecionado.split(' - ')[0]
             print('Transferindo para o RG: ' + rg_favorecido)
@@ -257,8 +266,8 @@ def __transferir(valor, rg, favorecido_selecionado):
                 __mostrar_janela_sucesso('Transferencia realizada com sucesso!')
                 tela_transferir.destroy()
 
-                novoSaldo = resposta[1]
-                __atualizar_saldo(novoSaldo)
+                novo_saldo = resposta[1]
+                __atualizar_saldo(novo_saldo)
         else:
             erro_valor_transferencia_label.config(text='Valor inválido')           
         
@@ -320,8 +329,8 @@ def __realizar_saque(valor, rg):
                 __mostrar_janela_sucesso('Saque realizado com sucesso!')
                 tela_saque.destroy()
 
-                novoSaldo = resposta[1]
-                __atualizar_saldo(novoSaldo)
+                novo_saldo = resposta[1]
+                __atualizar_saldo(novo_saldo)
         else:
             erro_valor_saque_label.config(text='Valor inválido')
 
@@ -376,8 +385,8 @@ def __realizar_deposito(valor, rg):
                 __mostrar_janela_sucesso('Depósito realizado com sucesso!')
                 tela_deposito.destroy()
 
-                novoSaldo = resposta[1]
-                __atualizar_saldo(novoSaldo)
+                novo_saldo = resposta[1]
+                __atualizar_saldo(novo_saldo)
         else:
             erro_valor_deposito_label.config(text='Valor inválido')
             
@@ -386,10 +395,20 @@ def __realizar_deposito(valor, rg):
         print(e)
         __mostrar_janela_erro(e)
 
+def __consultar_saldo(rg):
+    try:
+        resposta = consultar_saldo_request(rg)
+        saldo = resposta[1]
+
+        return saldo
+    except Exception as e:
+        print(e)
+        __mostrar_janela_erro(e)
+
 # Utilitários
-def __atualizar_saldo(novoSaldo):
-    lbl_saldo['text'] = 'Saldo: ' + novoSaldo
-    tela_principal.update()
+def __atualizar_saldo(novo_saldo):
+    lbl_saldo['text'] = 'Saldo: ' + novo_saldo
+    janela_principal.update()
 
 def __mostrar_janela_erro(mensagem):
     messagebox.showerror(title='Erro!', message=mensagem)
@@ -408,7 +427,7 @@ def __criar_janela(titulo, adicionarLabel, principal = False):
         
     tela.title(titulo)
     tela.geometry(WINDOW_DIMENSIONS)
-    tela.resizable(height=None, width=None)
+    tela.resizable(height=False, width=False)
 
     frm_principal = tk.Frame(tela)
     

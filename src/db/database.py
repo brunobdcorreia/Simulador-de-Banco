@@ -85,9 +85,9 @@ def get_nome_cliente(rg):
 
         cur.execute(''' SELECT nome, saldo FROM clientes WHERE rg=? ''', (rg,))
 
-        data = cur.fetchall()[0]
+        nome, saldo = cur.fetchall()[0]
 
-        return data
+        return (nome, saldo)
 
 # Obtem uma lista com o rg e o nome de todos os clientes cadastrados no banco
 def get_rg_nomes_clientes():

@@ -8,3 +8,4 @@ class Requests(Enum):
     DEPOSITO  = '4'
     TRANSFERENCIA = '5'
     OBTERLISTACLIENTES = '6'
+    CONSULTASALDO = '7'

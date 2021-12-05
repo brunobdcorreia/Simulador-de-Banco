@@ -40,9 +40,12 @@ def gerenciar_cliente_thread(conexao, endereco):
 
 def handle_request(req, conn, endereco):
     if Requests(req[0]) == Requests.CADASTRO:
-        cliente = Cliente(req[1], req[2], req[3])
+        cliente = Cliente(
+            nome=req[1], 
+            rg=req[2], 
+            pin=req[3])
         criar_cliente(cliente)
-        conn.send(str.encode('ok'))
+        conn.send(str.encode(Responses.SUCCESS.value))
 
     elif Requests(req[0]) == Requests.LOGIN:
         if not autenticar_cliente(req[1], req[2]):
@@ -50,8 +53,8 @@ def handle_request(req, conn, endereco):
             print(conn.getsockname())
             print(conn.getpeername())
             print('Mandando para', conn.getsockname())
-            info_cliente = get_nome_cliente(req[1])
-            conn.send(str.encode(info_cliente[0] + '#' + str(info_cliente[1])))
+            cliente_nome, cliente_saldo = get_nome_cliente(req[1])
+            conn.send(str.encode(Responses.SUCCESS.value + '#' + cliente_nome + '#' + str(cliente_saldo)))
         else:
             print('Login falhou')
             conn.send(str.encode('falha'))
@@ -103,10 +106,13 @@ def handle_request(req, conn, endereco):
             conn.send(str.encode(Responses.SUCCESS.value + '#' + str(saldo_novo) + '#' + str(saldo_novo_favorecido)))
 
     elif Requests(req[0]) == Requests.OBTERLISTACLIENTES:
-        # TODO : Tratar retorno da lista de clientes
         clientes = get_rg_nomes_clientes()
-        print(str(clientes))
-        conn.send(str.encode(str(clientes)))
+        conn.send(str.encode(Responses.SUCCESS.value + '#' + str(clientes)))
+
+    elif Requests(req[0]) == Requests.CONSULTASALDO:
+        saldo = get_saldo(req[1])
+        print("Consulta saldo retornou: {}".format(saldo))
+        conn.send(str.encode(Responses.SUCCESS.value + '#' + str(saldo)))
         
 
 while True:
