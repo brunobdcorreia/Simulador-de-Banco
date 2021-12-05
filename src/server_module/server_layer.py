@@ -7,6 +7,7 @@ sys.path.append(parentdir)
 from db.database import *
 from models.cliente import *
 from enums.requests import Requests
+from enums.responses import Responses
 
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 host = '127.0.0.1'
@@ -42,6 +43,7 @@ def handle_request(req, conn, endereco):
         cliente = Cliente(req[1], req[2], req[3])
         criar_cliente(cliente)
         conn.send(str.encode('ok'))
+
     elif req[0] == Requests.LOGIN.value:
         if not autenticar_cliente(req[1], req[2]):
             print('Login com sucesso')
@@ -53,14 +55,34 @@ def handle_request(req, conn, endereco):
         else:
             print('Login falhou')
             conn.send(str.encode('falha'))
+
     elif req[0] == Requests.SAQUE.value:
-        print("Recebeu request de saque")
-        resposta = atualizar_saldo(req[1], req[2])
-        print(type(resposta))
+        valor = req[1]
+        rg = req[2]
+        
+        saldoAtual = get_saldo(rg)
+
+        # Verifica se há saldo
+        if saldoAtual < valor:
+            conn.send(str.encode(Responses.FORBIDDEN.value + '#' + 'Saldo insuficiente'))
+        else:
+            # Realiza o saque
+            atualizar_saldo(saldoAtual - valor, rg)
+            conn.send(str.encode(Responses.SUCCESS.value))
+
+    elif req[0] == Requests.DEPOSITO.value:
+        valor = req[1]
+        rg = req[2]
+        
+        # Realiza o saque
+        atualizar_saldo(valor, rg)
+        conn.send(str.encode(Responses.SUCCESS.value))
+
     elif req[0] == Requests.OBTERLISTACLIENTES.value:
         # TODO : Tratar retorno da lista de clientes
-        clientes = get_nomes_rg_clientes()
+        clientes = get_rg_nomes_clientes()
         print(str(clientes))
+        conn.send(str.encode(str(clientes)))
         
 
 while True:

@@ -9,40 +9,48 @@ currentdir = os.path.dirname(os.path.realpath(__file__))
 parentdir = os.path.dirname(currentdir)
 sys.path.append(parentdir)
 
+WINDOW_DIMENSIONS = '300x250'
+
 from client_module.client_layer import *
 
-def __criar_tela_principal(nome, rg, saldo):
-    try:
-        window = tk.Tk("Banco")
-        window.title('Banco do Bruhsil')
-        frm_main = tk.Frame(window)
-        frm_sub = tk.Frame(master=frm_main, relief=tk.RIDGE, borderwidth=5)
-        lbl_banco = tk.Label(master=frm_main, text="Banco do Bruhsil")
+# TODO : Revisar variáveis globais
+def __criar_janela_principal(nome, rg, saldo):
+    try:        
+        tela_principal, frm_principal = __criar_janela(titulo='Área principal', adicionarLabel=True, principal=True)
+        frm_sub = tk.Frame(master=frm_principal, relief=tk.RIDGE, borderwidth=5)
 
         # Criar submenu a esquerda com nome, rg e saldo
         frm_menu = tk.Frame(master=frm_sub, relief=tk.RIDGE, borderwidth=5)
         lbl_dados = tk.Label(master=frm_menu, text="Dados do cliente")
         lbl_nome = tk.Label(master=frm_menu, text="Nome: " + nome)
         lbl_rg = tk.Label(master=frm_menu, text= "rg: " + rg)
-        lbl_saldo = tk.Label(master=frm_menu, text="Saldo: " + str(saldo))
+        
+        global saldo_atual
+        saldo_atual = saldo
+        lbl_saldo = tk.Label(master=frm_menu, text="Saldo: " + str(saldo_atual))
 
-        # Criar submenu a direita com botões para transferir e retirar
-        btn_transferir = tk.Button(master=frm_sub, text="Realizar transferencia", command=__mostrar_janela_transferir)
-        btn_retirar = tk.Button(master=frm_sub, text="Retirar", command=lambda: __mostrar_tela_retirar(rg))
+        # Criar submenu a direita com botões para transferir e realizar saque
+        btn_transferir = tk.Button(master=frm_sub, text="Transferencia", command=lambda: __mostrar_janela_transferir(rg))
+        saque_botao = tk.Button(master=frm_sub, text="Saque", command=lambda: __mostrar_tela_saque(rg))
+        deposito_botao = tk.Button(master=frm_sub, text="Depósito", command=lambda: __mostrar_tela_deposito(rg))
 
         btn_transferir.pack(side=tk.RIGHT)
-        btn_retirar.pack(side=tk.RIGHT)
+        saque_botao.pack(side=tk.RIGHT)
+        deposito_botao.pack(side=tk.RIGHT)
         lbl_dados.pack()
         lbl_nome.pack()
         lbl_rg.pack()
         lbl_saldo.pack()
         frm_menu.pack(side=tk.LEFT, padx=5, pady=5)
 
-        lbl_banco.pack()
         frm_sub.pack()
-        frm_main.pack(side=tk.TOP)
+        frm_principal.pack(side=tk.TOP)
 
-        window.mainloop()
+        # Fecha a tela de login/cadastro
+        tela_inicio.destroy()
+
+        # Definir nova principal
+        tela_principal.mainloop()        
     except Exception as e:
         print(e)
         __mostrar_janela_erro(e)
@@ -50,19 +58,20 @@ def __criar_tela_principal(nome, rg, saldo):
 def criar_janela_inicio():
     try:
         global tela_inicio
-        tela_inicio = tk.Tk('Login')
-        tela_inicio.geometry('300x250')
-        tela_inicio.resizable(height=None, width=None)
+        tela_inicio, frm_prinicpal = __criar_janela(titulo='Login', adicionarLabel=True, principal=True)
+        
+        login_botao = tk.Button(master=frm_prinicpal, text='Login', height='2', width='30', command=__criar_janela_login)
+        cadastrar_botao = tk.Button(master=frm_prinicpal, text='Cadastrar', height='2', width='30', command=__criar_janela_cadastro)
 
-        intro_lbl = tk.Label(text="Banco do Bruhsil", bg="blue", width="300", height="2", font=("Calibri", 13), fg='white').pack()
-        tk.Label(text='').pack()
-        login_btn = tk.Button(text='Login', height='2', width='30', command=__criar_janela_login)
-        login_btn.pack()
-        tk.Label(text='').pack()
+        # Construção da página
+        frm_prinicpal.pack()
+        tk.Label(master=frm_prinicpal, text='').pack()
+        login_botao.pack()
+        tk.Label(master=frm_prinicpal, text='').pack()
+        cadastrar_botao.pack()
+        tk.Label(master=frm_prinicpal, text='').pack()
 
-        register_btn = tk.Button(text='Cadastrar', height='2', width='30', command=__criar_janela_cadastro)
-        register_btn.pack()
-
+        # Janela principal
         tela_inicio.mainloop()
     except Exception as e:
         print(e)
@@ -71,41 +80,41 @@ def criar_janela_inicio():
 def __criar_janela_login():
     try:
         global tela_login
-        tela_login = tk.Toplevel(tela_inicio)
-        tela_login.title('Realizar login')
-        tela_login.geometry('300x250')
+        tela_login, frm_principal = __criar_janela(titulo='Realizar login', adicionarLabel=False)
 
         global rg_verificar
         global pin_verificar
-
         rg_verificar = tk.StringVar()
         pin_verificar = tk.StringVar()
 
-        tk.Label(tela_login, text="Insira suas credenciais", bg="blue", fg='white').pack()
-        tk.Label(tela_login, text="").pack()
+        # Header da janela
+        tk.Label(frm_principal, text="Insira suas credenciais", bg="blue", fg='white').pack()
+        tk.Label(frm_principal, text="").pack()
 
-        rg_lbl = tk.Label(tela_login, text='RG *')
-        rg_lbl.pack()
-
+        # Input do RG
         global rg_ent_login
-        rg_ent_login = tk.Entry(tela_login, textvariable=rg_verificar)
-        rg_ent_login.pack()
+        rg_lbl = tk.Label(frm_principal, text='RG *')
+        rg_ent_login = tk.Entry(frm_principal, textvariable=rg_verificar)
 
-        pin_lbl = tk.Label(tela_login, text='PIN *')
-        pin_lbl.pack()
-
+        # Input do PIN
         global pin_ent_login
-        pin_ent_login = tk.Entry(tela_login, show='*', textvariable=pin_verificar)
+        pin_lbl = tk.Label(frm_principal, text='PIN *')
+        pin_ent_login = tk.Entry(frm_principal, show='*', textvariable=pin_verificar)
+
+        # Botão de login
+        login_botao = tk.Button(frm_principal, text='Login', height='2', width='30', command=__realizar_login)
+
+        # Construção da página
+        frm_principal.pack()
+        rg_lbl.pack()
+        rg_ent_login.pack()
+        pin_lbl.pack()
         pin_ent_login.pack()
-
-        tk.Label(tela_login, text="").pack()
-
-        login_btn = tk.Button(tela_login, text='Login', height='2', width='30', command=__realizar_login)
-        login_btn.pack()
+        tk.Label(frm_principal, text="").pack()
+        login_botao.pack()
     except Exception as e:
         print(e)
         __mostrar_janela_erro(e)
-
 
 def __realizar_login():
     try:
@@ -118,53 +127,51 @@ def __realizar_login():
 
         tela_login.destroy()
         info_cliente = resposta_login[1]
-        __criar_tela_principal(info_cliente[0], info_rg, info_cliente[1])
+        __criar_janela_principal(info_cliente[0], info_rg, info_cliente[1])
     except Exception as e:
         print(e)
         __mostrar_janela_erro(e)
 
-        
-
 def __criar_janela_cadastro():
     try:
         global tela_cadastro
-        tela_cadastro = tk.Toplevel(tela_inicio)
-        tela_cadastro.title('Cadastro')
-        tela_cadastro.geometry('300x250')
+        tela_cadastro, frm_principal = __criar_janela(titulo='Cadastro', adicionarLabel=False)
 
         nome = tk.StringVar()
         rg = tk.StringVar()
         pin = tk.StringVar()
 
-        tk.Label(tela_cadastro, text="Insira as informações requisitadas", bg="blue", fg='white').pack()
-        tk.Label(tela_cadastro, text="").pack()
+        tk.Label(frm_principal, text="Insira as informações requisitadas", bg="blue", fg='white').pack()
 
-        nome_lbl = tk.Label(tela_cadastro, text='Nome *')
-        nome_lbl.pack()
-
+        # Input nome
         global nome_ent_cadastro
-        nome_ent_cadastro = tk.Entry(tela_cadastro, textvariable=nome)
-        nome_ent_cadastro.pack()
+        nome_lbl = tk.Label(frm_principal, text='Nome *')
+        nome_ent_cadastro = tk.Entry(frm_principal, textvariable=nome)
 
-        rg_lbl = tk.Label(tela_cadastro, text='RG *')
-        rg_lbl.pack()
-
+        # Input RG
         global rg_ent_cadastro
-        rg_ent_cadastro = tk.Entry(tela_cadastro, textvariable=rg)
-        rg_ent_cadastro.pack()
+        rg_lbl = tk.Label(frm_principal, text='RG *')
+        rg_ent_cadastro = tk.Entry(frm_principal, textvariable=rg)
 
+        # Input Pin
         global pin_ent_cadastro
-        pin_lbl = tk.Label(tela_cadastro, text='PIN *')
+        pin_lbl = tk.Label(frm_principal, text='PIN *')
+        pin_ent_cadastro = tk.Entry(frm_principal, show='*',textvariable=pin)
+
+        # Botão cadastro
+        cadastrar_botao = tk.Button(frm_principal, text='Confirmar', height='2', width='30', command=__cadastrar_usuario)
+
+        # Construção da página
+        frm_principal.pack()
+        nome_lbl.pack()
+        nome_ent_cadastro.pack()
+        rg_lbl.pack()
+        rg_ent_cadastro.pack()
         pin_lbl.pack()
-
-        pin_ent_cadastro = tk.Entry(tela_cadastro, show='*',textvariable=pin)
         pin_ent_cadastro.pack()
+        tk.Label(frm_principal, text="").pack()
+        cadastrar_botao.pack()
 
-
-        tk.Label(tela_cadastro, text="").pack()
-
-        cadastro_btn = tk.Button(tela_cadastro, text='Confirmar', height='2', width='30', command=__cadastrar_usuario)
-        cadastro_btn.pack()
     except Exception as e:
         print(e)
         __mostrar_janela_erro(e)
@@ -184,72 +191,160 @@ def __cadastrar_usuario():
         print(e)
         __mostrar_janela_erro(e)
 
-
-def __mostrar_janela_transferir():
+def __mostrar_janela_transferir(rg):
     try:
         resposta_obter_clientes = obter_lista_clientes()
 
         assert resposta_obter_clientes[0], "Erro ao carregar lista dos clientes. Por favor, tente novamente."
-        # TODO : Tratar os dados para ser um array de rg - nome
-        clientes = []
+        clientes = resposta_obter_clientes[1]
 
-        tela_transferir = tk.Toplevel()
-        tela_transferir.title('Transferir')
+        # Removendo o cliente que é o próximo que está logado
+        clientes = [cliente for cliente in clientes if not rg in cliente]
 
-        frm_principal = tk.Frame(tela_transferir)
+        _, frm_principal = __criar_janela(titulo='Transferir', adicionarLabel=False)
 
-        transferir_cliente_selecionado = StringVar()
-        transferir_cliente_selecionado_optionMenu = tk.OptionMenu(frm_principal, transferir_cliente_selecionado, clientes)
+        # Dropdown para selecionar o cliente que receberá o valor
+        transferir_cliente_selecionado = StringVar(frm_principal)
+        transferir_cliente_selecionado.set('Selecione um cliente')
+        transferir_cliente_selecionado_optionMenu = tk.OptionMenu(frm_principal, transferir_cliente_selecionado, *clientes)
 
+        # Input para transferir o valor
+        transferir_valor_lbl = tk.Label(master=frm_principal, text="Valor para transferência (R$)")
         transferir_valor = tk.Entry(frm_principal)
-        transferir_btn = tk.Button(frm_principal, 
+        transferir_botao = tk.Button(frm_principal, 
                                 text='Transferir', 
                                 height='2', 
                                 width='10', 
                                 bg='green', 
                                 command=lambda: 
-                                        __transferir(transferir_valor.get(), 
+                                        __transferir(rg,
+                                                    transferir_valor.get(), 
                                                     transferir_cliente_selecionado.get()))                               
 
+        # Construção da página
         frm_principal.pack()
         transferir_cliente_selecionado_optionMenu.pack()    
+        tk.Label(master=frm_principal, text='').pack()
+        transferir_valor_lbl.pack()
         transferir_valor.pack()
-        transferir_btn.pack()
+        tk.Label(master=frm_principal, text='').pack()
+        transferir_botao.pack()
     except Exception as e:
         print(e)
         __mostrar_janela_erro(e)
 
-def __transferir(valor, clienteSelecionado):
+def __transferir(rg, valor, clienteSelecionado):
     try:
-        obter_lista_clientes()
+        pass
     except Exception as e:
         print(e)
         __mostrar_janela_erro(e)
 
-def __mostrar_tela_retirar(rg):
+def __mostrar_tela_saque(rg):
     try:
-        tela_retirar = tk.Toplevel()
-        tela_retirar.title('Retirada')
+        _, frm_principal = __criar_janela(titulo='Saque', adicionarLabel=False)
 
-        tk.Label(tela_retirar, text='Insira o valor a ser sacado:', bg='blue', fg='white').pack()
-        tk.Label(tela_retirar, text='').pack()
+        # Cabeçalho da janela
+        info_label = tk.Label(master=frm_principal, text='Insira o valor a ser sacado:', bg='blue', fg='white')
 
-        global ent_valor_a_retirar
-        ent_valor_a_retirar = tk.Entry(tela_retirar)
+        # Input valor para realizar saque
+        global ent_valor_para_saque
+        valor_lbl = tk.Label(master=frm_principal, text='Valor')
+        ent_valor_para_saque = tk.Entry(frm_principal)
 
-        ent_valor_a_retirar.pack()
+        # Botão realizar saque
+        saque_botao = tk.Button(master=frm_principal, text='Confirmar', height='2', width='10', command=lambda: enviar_request_saque(ent_valor_para_saque.get(), rg))
 
-        tk.Label(tela_retirar, text='').pack()
+        # Construção da página
+        frm_principal.pack()
+        info_label.pack()
+        tk.Label(master=frm_principal, text='').pack()
+        valor_lbl.pack()
+        ent_valor_para_saque.pack()
+        tk.Label(master=frm_principal, text='').pack()
+        saque_botao.pack()
 
-        retirar_btn = tk.Button(tela_retirar, text='Confirmar', height='2', width='10', command=lambda: enviar_request_saque(ent_valor_a_retirar.get(), rg))
-        retirar_btn.pack()
+    except Exception as e:
+        print(e)
+        __mostrar_janela_erro(e)
+
+def __mostrar_tela_deposito(rg):
+    try:
+        global tela_deposito
+        tela_deposito, frm_principal = __criar_janela(titulo='Depósito', adicionarLabel=False)
+
+        # Cabeçalho da janela
+        info_label = tk.Label(master=frm_principal, text='Insira o valor a ser depositado:', bg='blue', fg='white')
+
+        # Input valor para depósito
+        valor_lbl = tk.Label(master=frm_principal, text='Valor')
+        ent_valor_para_deposito = tk.Entry(frm_principal)
+
+        # Botão realizar depósito
+        deposito_botao = tk.Button(master=frm_principal, text='Confirmar', height='2', width='10', command=lambda: __realizar_deposito(ent_valor_para_deposito.get(), rg))
+
+        # Construção da página
+        frm_principal.pack()
+        info_label.pack()
+        tk.Label(master=frm_principal, text='').pack()
+        valor_lbl.pack()
+        ent_valor_para_deposito.pack()
+        tk.Label(master=frm_principal, text='').pack()
+        deposito_botao.pack()
+
+    except Exception as e:
+        print(e)
+        __mostrar_janela_erro(e)
+
+def __realizar_deposito(valor, rg):
+    try:
+        resposta = enviar_request_deposito(valor, rg)
+        status = resposta[0]
+
+        if status != Responses.SUCCESS:
+            mensagem = resposta[1]
+            if status == Responses.INTERNAL_ERROR:
+                raise ValueError(mensagem)
+            elif status == Responses.FORBIDDEN:
+                __mostrar_janela_alerta(mensagem)
+        else:
+            __mostrar_janela_sucesso('Depósito realizado com sucesso!')
+            tela_deposito.destroy()
+            
+
     except Exception as e:
         print(e)
         __mostrar_janela_erro(e)
 
 # Utilitários
+def __atualizar_saldo(novoSaldo):
+    saldo_atual = novoSaldo
+
 def __mostrar_janela_erro(mensagem):
     messagebox.showerror(title='Erro!', message=mensagem)
 
 def __mostrar_janela_sucesso(mensagem):
     messagebox.showinfo(title='Sucesso!', message=mensagem)
+
+def __mostrar_janela_alerta(mensagem):
+    messagebox.showwarning(title='Aviso', mensagem=mensagem)
+
+def __criar_janela(titulo, adicionarLabel, principal = False):
+    if principal:
+        tela = tk.Tk()
+    else:
+        tela = tk.Toplevel()
+        
+    tela.title(titulo)
+    tela.geometry(WINDOW_DIMENSIONS)
+    tela.resizable(height=None, width=None)
+
+    frm_principal = tk.Frame(tela)
+    
+    if adicionarLabel:
+        __criar_label_padrao(frm_principal)
+
+    return (tela, frm_principal)
+
+def __criar_label_padrao(frameMaster):
+    tk.Label(frameMaster, text="Banco do Bruhsil", bg="blue", width="300", height="2", font=("Calibri", 13), fg='white').pack()

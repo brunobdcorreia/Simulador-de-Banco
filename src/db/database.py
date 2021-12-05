@@ -95,26 +95,32 @@ def get_nome_cliente(rg):
 
     return data
 
-def get_nomes_rg_clientes():
+def get_rg_nomes_clientes():
     con = sql.connect('clientes.db')
     cur = con.cursor()
 
-    cur.execute(''' SELECT nome, rg FROM clientes ''')
-    clientes = []
-    clientes.concat(cur.fetchall())
+    cur.execute(''' SELECT rg, nome FROM clientes where nome!='admin' ''')
+    clientes = [] + cur.fetchall()
     
     con.close()
     
     return (clientes)
 
+def get_saldo(rg):
+    con = sql.connect('clientes.db')
+    cur = con.cursor()
+
+    cur.execute(''' SELECT saldo from clientes where rg=? ''', (rg))
+    saldo = cur.fetchall()[0]
+
+    con.close()
+
+    return saldo
+
 def atualizar_saldo(valor, rg):
     con = sql.connect('clientes.db')
     cur = con.cursor()
 
-    cur.execute(''' SELECT saldo FROM clientes WHERE rg=? ''', (rg))
-
-    resultado = cur.fetchall()[0]
-    
+    cur.execute(''' UPDATE clientes SET saldo=? WHERE rg=? ''', (valor, rg))    
+    print('atualizei')
     con.close()
-
-    return resultado
