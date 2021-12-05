@@ -33,6 +33,7 @@ def criar_cliente(cliente):
 
     con.commit()
     con.close()
+    
 
 def autenticar_cliente(rg, pin):
     con = sql.connect('clientes.db')
@@ -81,3 +82,39 @@ def __check_cliente_rg(rg):
     
     con.close()
     return exists
+
+def get_nome_cliente(rg):
+    con = sql.connect('clientes.db')
+    cur = con.cursor()
+
+    cur.execute(''' SELECT nome, saldo FROM clientes WHERE rg=? ''', (rg,))
+
+    data = cur.fetchall()[0]
+
+    con.close()
+
+    return data
+
+def get_nomes_rg_clientes():
+    con = sql.connect('clientes.db')
+    cur = con.cursor()
+
+    cur.execute(''' SELECT nome, rg FROM clientes ''')
+    clientes = []
+    clientes.concat(cur.fetchall())
+    
+    con.close()
+    
+    return (clientes)
+
+def atualizar_saldo(valor, rg):
+    con = sql.connect('clientes.db')
+    cur = con.cursor()
+
+    cur.execute(''' SELECT saldo FROM clientes WHERE rg=? ''', (rg))
+
+    resultado = cur.fetchall()[0]
+    
+    con.close()
+
+    return resultado
