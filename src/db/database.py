@@ -5,10 +5,10 @@ parentdir = os.path.dirname(currentdir)
 sys.path.append(parentdir)
 from models.cliente import Cliente
 
-# TODO: Comentar
-
-# Cria a instância do banco de dados
 def criar_db():    
+    '''
+    Cria a instância do banco de dados
+    '''
     with sql.connect('clientes.db') as con:
         cur = con.cursor()
         
@@ -23,8 +23,10 @@ def criar_db():
 
         con.commit()
 
-# Cadastra um novo cliente
 def criar_cliente(cliente):
+    '''
+    Cadastra um novo cliente
+    '''
     with sql.connect('clientes.db') as con:
         cur = con.cursor()
         
@@ -36,6 +38,9 @@ def criar_cliente(cliente):
         con.commit()        
 
 def autenticar_cliente(rg, pin):
+    '''
+    Verifica se o usuário exsite e os dados estão corretos
+    '''
     with sql.connect('clientes.db') as con:
         cur = con.cursor()
         authentication_failed = True
@@ -50,8 +55,10 @@ def autenticar_cliente(rg, pin):
 
         return authentication_failed
 
-# Checa se o cliente cujo nome é passado como parâmetro já existe no banco de dados.
 def __check_cliente_nome(nome):
+    '''
+    Checa se o cliente cujo nome é passado como parâmetro já existe no banco de dados.
+    '''
     with sql.connect('clientes.db') as con:
         cur = con.cursor()
         exists = True
@@ -66,6 +73,9 @@ def __check_cliente_nome(nome):
         return exists
 
 def __check_cliente_rg(rg):
+    '''
+    Verifica se o cliente existe a partir do rg fornecido
+    '''
     with sql.connect('clientes.db') as con:
         cur = con.cursor()
         exists = True
@@ -80,6 +90,9 @@ def __check_cliente_rg(rg):
         return exists
 
 def get_nome_cliente(rg):
+    '''
+    Obtém o nome e o saldo cliente a partir do rg cadastrado
+    '''
     with sql.connect('clientes.db') as con:
         cur = con.cursor()
 
@@ -89,8 +102,10 @@ def get_nome_cliente(rg):
 
         return (nome, saldo)
 
-# Obtem uma lista com o rg e o nome de todos os clientes cadastrados no banco
 def get_rg_nomes_clientes():
+    '''
+    Obtem uma lista com o rg e o nome de todos os clientes cadastrados no banco
+    '''
     with sql.connect('clientes.db') as con:
         cur = con.cursor()
 
@@ -99,8 +114,10 @@ def get_rg_nomes_clientes():
         
         return (clientes)
 
-# Obtem o saldo de um cliente a partir do seu rg
 def get_saldo(rg):
+    '''
+    Obtem o saldo de um cliente a partir do seu rg
+    '''
     with sql.connect('clientes.db') as con:
         cur = con.cursor()
 
@@ -109,8 +126,10 @@ def get_saldo(rg):
 
         return saldo[0]
 
-# Atualiza o saldo de um cliente a partir do seu rg
 def atualizar_saldo(valor, rg):
+    '''
+    Atualiza o saldo de um cliente a partir do seu rg
+    '''
     with sql.connect('clientes.db') as con:
         cur = con.cursor()
 
