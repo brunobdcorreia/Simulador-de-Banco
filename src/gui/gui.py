@@ -12,9 +12,44 @@ sys.path.append(parentdir)
 WINDOW_DIMENSIONS = '300x250'
 
 from client_module.client_layer import *
-# TODO: Comentar
+
+# Métodos para criar janelas
+def criar_janela_inicio():
+    '''
+    Cria a janela inicial da aplicação. Ela possui dois botões com as operações inciais disponíveis: Login, para entrar em um usuário
+    cadastrado no banco, e Cadastrar, para cadastrar um novo usuário
+    '''
+    try:
+        # Construção do esqueleto da janela
+        global tela_inicio
+        tela_inicio, frm_prinicpal = __criar_janela(titulo='Login', adicionarLabel=True, principal=True)
+        
+        # Botões das operações de login e cadastro
+        login_botao = tk.Button(master=frm_prinicpal, text='Login', height='2', width='30', command=__criar_janela_login)
+        cadastrar_botao = tk.Button(master=frm_prinicpal, text='Cadastrar', height='2', width='30', command=__criar_janela_cadastro)
+
+        # Construção da página
+        frm_prinicpal.pack()
+        tk.Label(master=frm_prinicpal, text='').pack()
+        login_botao.pack()
+        tk.Label(master=frm_prinicpal, text='').pack()
+        cadastrar_botao.pack()
+        tk.Label(master=frm_prinicpal, text='').pack()
+
+        # Janela principal
+        tela_inicio.mainloop()
+    except Exception as e:
+        print(e)
+        __mostrar_janela_erro(e)
+
 def __criar_janela_principal(nome, rg, saldo):
+    '''
+    Cria a janela que abre ao usuário fazer login no banco e fecha a janela inicial. Está tela contém as informações do cliente 
+    (RG, Nome e Saldo), um botão no topo da tela para atualizar o valor do saldo, e na parte direita 3 botões para as operações 
+    disponíveis: Saque, Depósito e Transferência entre clientes cadastrados no banco.
+    '''
     try:       
+        # Construção do esqueleto da janela
         global janela_principal 
         janela_principal, frm_principal = __criar_janela(titulo='Área principal', adicionarLabel=True, principal=True)
         frm_sub = tk.Frame(master=frm_principal, relief=tk.RIDGE, borderwidth=5)
@@ -34,6 +69,7 @@ def __criar_janela_principal(nome, rg, saldo):
         deposito_botao = tk.Button(master=frm_sub, text="Depósito", command=lambda: __mostrar_tela_deposito(rg))
         atualizar_botao = tk.Button(master=frm_principal, text='Atualizar', command=lambda: __atualizar_saldo(__consultar_saldo(rg)))
 
+        # Construção da tela
         btn_transferir.pack(side=tk.RIGHT)
         saque_botao.pack(side=tk.RIGHT)
         deposito_botao.pack(side=tk.RIGHT)
@@ -56,37 +92,16 @@ def __criar_janela_principal(nome, rg, saldo):
         print(e)
         __mostrar_janela_erro(e)
 
-def criar_janela_inicio():
-    try:
-        global tela_inicio
-        tela_inicio, frm_prinicpal = __criar_janela(titulo='Login', adicionarLabel=True, principal=True)
-        
-        login_botao = tk.Button(master=frm_prinicpal, text='Login', height='2', width='30', command=__criar_janela_login)
-        cadastrar_botao = tk.Button(master=frm_prinicpal, text='Cadastrar', height='2', width='30', command=__criar_janela_cadastro)
-
-        # Construção da página
-        frm_prinicpal.pack()
-        tk.Label(master=frm_prinicpal, text='').pack()
-        login_botao.pack()
-        tk.Label(master=frm_prinicpal, text='').pack()
-        cadastrar_botao.pack()
-        tk.Label(master=frm_prinicpal, text='').pack()
-
-        # Janela principal
-        tela_inicio.mainloop()
-    except Exception as e:
-        print(e)
-        __mostrar_janela_erro(e)
-
 def __criar_janela_login():
+    '''
+    Cria a janela de login. Nesta tela, o usuário deve pôr as informações da conta para realizar o login
+    e ser encaminhado para a janela com as operações disponíveis para a conta. Nesta janela, temos 2 campos
+    para inserir os dados: RG e PIN. Abaixo, o botão de login para realizar o login.
+    '''
     try:
+        # Construção do esqueleto da janela
         global tela_login
         tela_login, frm_principal = __criar_janela(titulo='Realizar login', adicionarLabel=False)
-
-        global rg_verificar
-        global pin_verificar
-        rg_verificar = tk.StringVar()
-        pin_verificar = tk.StringVar()
 
         # Header da janela
         tk.Label(frm_principal, text="Insira suas credenciais", bg="blue", fg='white').pack()
@@ -94,11 +109,13 @@ def __criar_janela_login():
 
         # Input do RG
         global rg_ent_login
+        rg_verificar = tk.StringVar()
         rg_lbl = tk.Label(frm_principal, text='RG *')
         rg_ent_login = tk.Entry(frm_principal, textvariable=rg_verificar)
 
         # Input do PIN
         global pin_ent_login
+        pin_verificar = tk.StringVar()
         pin_lbl = tk.Label(frm_principal, text='PIN *')
         pin_ent_login = tk.Entry(frm_principal, show='*', textvariable=pin_verificar)
 
@@ -117,48 +134,34 @@ def __criar_janela_login():
         print(e)
         __mostrar_janela_erro(e)
 
-def __realizar_login():
-    try:
-        info_rg = rg_ent_login.get()
-        info_pin = pin_ent_login.get()
-        
-        resposta_login = enviar_request_login(info_rg, info_pin)
-
-        status = resposta_login[0]
-        assert status != Responses.INTERNAL_ERROR, resposta_login[1] # Resposta_login[1] é a mensagem sobre o erro
-
-        tela_login.destroy()
-        
-        nome = resposta_login[1]
-        saldo = resposta_login[2]
-        __criar_janela_principal(nome, info_rg, saldo)
-    except Exception as e:
-        print(e)
-        __mostrar_janela_erro(e)
-
 def __criar_janela_cadastro():
+    '''
+    Abre a janela para cadastrar um novo usuário. Ela possui 3 campos onde o usuário deve inserir
+    informações: Nome, RG e PIN. Abaixo deles, temos o botão para realizar a operação de cadastro.
+    '''
     try:
+        # Construção do esqueleto da janela
         global tela_cadastro
         tela_cadastro, frm_principal = __criar_janela(titulo='Cadastro', adicionarLabel=False)
 
-        nome = tk.StringVar()
-        rg = tk.StringVar()
-        pin = tk.StringVar()
-
+        # Texto informativo no topo da janela
         tk.Label(frm_principal, text="Insira as informações requisitadas", bg="blue", fg='white').pack()
 
         # Input nome
         global nome_ent_cadastro
+        nome = tk.StringVar()
         nome_lbl = tk.Label(frm_principal, text='Nome *')
         nome_ent_cadastro = tk.Entry(frm_principal, textvariable=nome)
 
         # Input RG
         global rg_ent_cadastro
+        rg = tk.StringVar()
         rg_lbl = tk.Label(frm_principal, text='RG *')
         rg_ent_cadastro = tk.Entry(frm_principal, textvariable=rg)
 
         # Input Pin
         global pin_ent_cadastro
+        pin = tk.StringVar()
         pin_lbl = tk.Label(frm_principal, text='PIN *')
         pin_ent_cadastro = tk.Entry(frm_principal, show='*',textvariable=pin)
 
@@ -180,35 +183,24 @@ def __criar_janela_cadastro():
         print(e)
         __mostrar_janela_erro(e)
 
-def __cadastrar_usuario():
-    try:
-        info_nome = nome_ent_cadastro.get()
-        info_rg = rg_ent_cadastro.get()
-        info_pin = pin_ent_cadastro.get()
-        
-        resposta = enviar_request_cadastro(info_nome, info_rg, info_pin)
-        status = resposta[0]
-        assert status != Responses.INTERNAL_ERROR, resposta[1] # Resposta[1] é a mensagem
-           
-        __mostrar_janela_sucesso('Usuário foi cadastrado!')
-        
-        tela_cadastro.destroy()
-    except Exception as e:
-        print(e)
-        __mostrar_janela_erro(e)
-
 def __mostrar_janela_transferir(rg):
+    '''
+    Abre a janela para fazer a operação de transferência. Ela possui um seletor, para selecionar
+    qual cliente receberá o dinheiro, um campo para inserir o valor da transferência e um botão
+    abaixo para efetuar a operação.
+    '''
     try:
+        # Requisita ao client_layer para obter a lista de todos os clientes com o servidor
         resposta_obter_clientes = obter_lista_clientes()
         status = resposta_obter_clientes[0]
         
         assert status != Responses.INTERNAL_ERROR, "Erro ao carregar lista dos clientes. Por favor, tente novamente."
         
         clientes = resposta_obter_clientes[1]
-
-        # Removendo o cliente que é o próximo que está logado
+        # Removendo o cliente que é o que está logado da lista
         clientes = [cliente for cliente in clientes if not rg in cliente]
 
+        # Construção do esqueleto da janela
         global tela_transferir
         tela_transferir, frm_principal = __criar_janela(titulo='Transferir', adicionarLabel=False)
 
@@ -248,38 +240,13 @@ def __mostrar_janela_transferir(rg):
         print(e)
         __mostrar_janela_erro(e)
 
-def __transferir(valor, rg, favorecido_selecionado):
-    try:
-        if __validar_numero(valor):
-            if favorecido_selecionado == 'Selecione um cliente':
-                erro_cliente_selecionado_label.config(text='É preciso selecionar o cliente')
-            else:
-                rg_favorecido = favorecido_selecionado.split(' - ')[0]
-                resposta = enviar_request_transferencia(valor, rg, rg_favorecido)
-
-                status = resposta[0]
-
-                if status != Responses.SUCCESS:
-                    mensagem = resposta[1]
-                    if status == Responses.INTERNAL_ERROR:
-                        raise ValueError(mensagem)
-                    elif status == Responses.FORBIDDEN:
-                        __mostrar_janela_alerta(mensagem)
-                else:
-                    __mostrar_janela_sucesso('Transferencia realizada com sucesso!')
-                    tela_transferir.destroy()
-
-                    novo_saldo = resposta[1]
-                    __atualizar_saldo(novo_saldo)
-        else:
-            erro_valor_transferencia_label.config(text='Valor inválido')           
-        
-    except Exception as e:
-        print(e)
-        __mostrar_janela_erro(e)
-
 def __mostrar_tela_saque(rg):
+    '''
+    Exibe a janela para realizar um saque. Ela possui um campo para informar o valor e um
+    botão abaixo para realizar a operação.
+    '''
     try:
+        # Construção do esqueleto da janela
         global tela_saque
         tela_saque, frm_principal = __criar_janela(titulo='Saque', adicionarLabel=False)
 
@@ -316,33 +283,13 @@ def __mostrar_tela_saque(rg):
         print(e)
         __mostrar_janela_erro(e)
 
-def __realizar_saque(valor, rg):
-    try:
-        if __validar_numero(valor):
-            resposta = enviar_request_saque(valor, rg)
-            
-            status = resposta[0]
-            if status != Responses.SUCCESS:
-                mensagem = resposta[1]
-                if status == Responses.INTERNAL_ERROR:
-                    raise ValueError(mensagem)
-                elif status == Responses.FORBIDDEN:
-                    __mostrar_janela_alerta(mensagem)
-            else:
-                __mostrar_janela_sucesso('Saque realizado com sucesso!')
-                tela_saque.destroy()
-
-                novo_saldo = resposta[1]
-                __atualizar_saldo(novo_saldo)
-        else:
-            erro_valor_saque_label.config(text='Valor inválido')
-
-    except Exception as e:
-        print(e)
-        __mostrar_janela_erro(e)
-
 def __mostrar_tela_deposito(rg):
+    '''
+    Abrir a janela para realizar a operação de depósito. Ela possui um campo para inserir o valor e um botão
+    abaixo para realizar a operação.
+    '''
     try:
+        # Construção do esqueleto da janela
         global tela_deposito
         tela_deposito, frm_principal = __criar_janela(titulo='Depósito', adicionarLabel=False)
 
@@ -372,9 +319,127 @@ def __mostrar_tela_deposito(rg):
         print(e)
         __mostrar_janela_erro(e)
 
-def __realizar_deposito(valor, rg):
+# Métodos para realizar requests ao client_layer
+def __realizar_login():
+    '''
+    Realiza a operação de efetuar o login. Este método requisita ao client_layer que faça a requisição ao
+    banco para validar o usuário e, caso o usuário esteja validado, o método para abrir a janela principal 
+    que possui as 3 operações principais do banco e os dados do cliente que está logado é invocado.
+    '''
     try:
-        if __validar_numero(valor):
+        rg_informado = rg_ent_login.get()
+        pin_informado = pin_ent_login.get()
+        
+        resposta_login = enviar_request_login(rg_informado, pin_informado)
+
+        status = resposta_login[0]
+        assert status != Responses.INTERNAL_ERROR, resposta_login[1] # Resposta_login[1] é a mensagem sobre o erro
+
+        tela_login.destroy() # Fecha a tela de login
+        
+        nome = resposta_login[1]
+        saldo = resposta_login[2]
+        __criar_janela_principal(nome, rg_informado, saldo)
+    except Exception as e:
+        print(e)
+        __mostrar_janela_erro(e)
+
+def __cadastrar_usuario():
+    '''
+    Realiza a operação de requisitar ao cliente_layer que realize a comunicação com o servidor e
+    cadastre o usuário, enviando os dados que foram inseridos na janela. Caso sucesso, aparece
+    uma mensagem e ao confirmar a janela se fecha.
+    '''
+    try:
+        # Dados que foram preenchidos na janela
+        info_nome = nome_ent_cadastro.get()
+        info_rg = rg_ent_cadastro.get()
+        info_pin = pin_ent_cadastro.get()
+        
+        resposta = enviar_request_cadastro(info_nome, info_rg, info_pin)
+        status = resposta[0]
+        assert status != Responses.INTERNAL_ERROR, resposta[1] # Resposta[1] é a mensagem
+           
+        __mostrar_janela_sucesso('Usuário foi cadastrado!')
+        
+        tela_cadastro.destroy()
+    except Exception as e:
+        print(e)
+        __mostrar_janela_erro(e)
+
+def __transferir(valor, rg, favorecido_selecionado):
+    '''
+    Requisita para o client_layer realizar a operação de transferência passando o valor, RG e
+    cliente favorecido de acordo com o que foi preenchido na janela de trasferência.
+    '''
+    try:
+        if __validar_numero(valor): # Verifica se o que está escrito no campo é um número
+            # Verifica se foi selecionado um cliente
+            if favorecido_selecionado == 'Selecione um cliente':
+                # Escreve um texto informando o erro acima do seletor de cliente
+                erro_cliente_selecionado_label.config(text='É preciso selecionar o cliente')
+            else:
+                rg_favorecido = favorecido_selecionado.split(' - ')[0]
+                resposta = enviar_request_transferencia(valor, rg, rg_favorecido)
+
+                status = resposta[0]
+
+                if status != Responses.SUCCESS:
+                    mensagem = resposta[1]
+                    if status == Responses.INTERNAL_ERROR:
+                        raise ValueError(mensagem)
+                    elif status == Responses.FORBIDDEN:
+                        __mostrar_janela_alerta(mensagem)
+                else:
+                    # Exibe uma mensagem de sucesso, atualiza o saldo na tela principal e fecha a tela de transferências
+                    __mostrar_janela_sucesso('Transferencia realizada com sucesso!')
+                    tela_transferir.destroy()
+
+                    novo_saldo = resposta[1]
+                    __atualizar_saldo(novo_saldo)
+        else: # Escreve um texto informando o erro abaixo do campo de valor
+            erro_valor_transferencia_label.config(text='Valor inválido')           
+        
+    except Exception as e:
+        print(e)
+        __mostrar_janela_erro(e)
+
+def __realizar_saque(valor, rg):
+    '''
+    Realiza a requisição ao client_layer para realizar a operação de saque no servidor. Se sucesso,
+    fecha a janela e atualiza o saldo na janela principal.
+    '''
+    try:
+        if __validar_numero(valor): # Valida se o que foi preenchido no campo é um número
+            resposta = enviar_request_saque(valor, rg)
+            
+            status = resposta[0]
+            if status != Responses.SUCCESS:
+                mensagem = resposta[1]
+                if status == Responses.INTERNAL_ERROR:
+                    raise ValueError(mensagem)
+                elif status == Responses.FORBIDDEN:
+                    __mostrar_janela_alerta(mensagem)
+            else:
+                __mostrar_janela_sucesso('Saque realizado com sucesso!')
+                tela_saque.destroy()
+
+                novo_saldo = resposta[1]
+                __atualizar_saldo(novo_saldo)
+        else: # Escreve um texto informando o erro abaixo do campo de valor
+            erro_valor_saque_label.config(text='Valor inválido')
+
+    except Exception as e:
+        print(e)
+        __mostrar_janela_erro(e)
+
+def __realizar_deposito(valor, rg):
+    '''
+    Realiza a requisição ao client_layer para realizar a operação de depósito no servidor. Se sucesso,
+    exibe uma mensagem e fecha a janela de depósito.
+    '''
+    try:
+        if __validar_numero(valor): # Valida se o que foi escrito no campo é realmente um número
             resposta = enviar_request_deposito(valor, rg)
             
             status = resposta[0]
@@ -390,7 +455,7 @@ def __realizar_deposito(valor, rg):
 
                 novo_saldo = resposta[1]
                 __atualizar_saldo(novo_saldo)
-        else:
+        else: # Escreve um texto informando o erro abaixo do campo de valor
             erro_valor_deposito_label.config(text='Valor inválido')
             
 
@@ -399,6 +464,10 @@ def __realizar_deposito(valor, rg):
         __mostrar_janela_erro(e)
 
 def __consultar_saldo(rg):
+    '''
+    Realiza a requisição ao client_layer para obter o saldo do cliente no servidor e retorna
+    o saldo obtido.
+    '''
     try:
         resposta = consultar_saldo_request(rg)
         saldo = resposta[1]
@@ -423,6 +492,13 @@ def __mostrar_janela_alerta(mensagem):
     messagebox.showwarning(title='Aviso', message=mensagem)
 
 def __criar_janela(titulo, adicionarLabel, principal = False):
+    '''
+    Método que cria o esqueleto de todas as janelas.
+    titulo: Título da página
+    adicionarLabel: Informa se a página terá o label que é o título da aplicação
+    princpal: Informa se a instância é uma janela princpal da biblioteca Tkinter ou se é uma derivada.
+    Retorna a janela e o frame principal dela.
+    '''
     if principal:
         tela = tk.Tk()
     else:
