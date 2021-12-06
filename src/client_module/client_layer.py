@@ -10,8 +10,13 @@ BUFFER_SIZE = 1024
 MENSAGEM_ERRO_DESCONHECIDO = 'Erro desconhecido'
 MENSAGEM_SERVIDOR_SEM_RESPOSTA = 'Erro de conexão com o servidor: sem resposta'
 
-
 def enviar_request_cadastro(nome, rg, pin):  
+    """
+    Contecta-se com o servidor e faz uma requisição para cadastrar um novo usuário
+    nome: nome do usuário
+    rg: rg do usuário
+    pin: pin do usuário
+    """
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
         try:
             client_socket.connect((host, porta))
@@ -33,6 +38,11 @@ def enviar_request_cadastro(nome, rg, pin):
             return (Responses.INTERNAL_ERROR, str(error))
 
 def enviar_request_login(rg, pin):
+    """
+    Contecta-se com o servidor e faz uma requisição para validar o usuário para fazer o login na aplicação
+    rg: rg do usuário
+    pin: pin do usuário
+    """
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
         try:
             client_socket.connect((host, porta))        
@@ -58,7 +68,12 @@ def enviar_request_login(rg, pin):
             print(str(error))
             return (Responses.INTERNAL_ERROR, str(error))
             
-def enviar_request_saque(valor, rg):  
+def enviar_request_saque(valor, rg):
+    """
+    Contecta-se com o servidor e faz uma requisição para realizar o saque
+    valor: valor que será retirado
+    rg: rg do cliente que está realizando a ação
+    """  
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
         try:    
             client_socket.connect((host, porta))
@@ -84,6 +99,11 @@ def enviar_request_saque(valor, rg):
             return (Responses.INTERNAL_ERROR, str(error))
 
 def enviar_request_deposito(valor, rg):
+    """
+    Contecta-se com o servidor e faz uma requisição para realiazr o depósito
+    valor: valor que será adicionado à conta
+    rg: rg do cliente que receberá o valor
+    """
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
         try:
             client_socket.connect((host, porta))
@@ -108,6 +128,12 @@ def enviar_request_deposito(valor, rg):
             return (Responses.INTERNAL_ERROR, str(error))
 
 def enviar_request_transferencia(valor, rg, rg_favorecido):
+    """
+    Contecta-se com o servidor e faz uma requisição para realizar uma transferência entre clientes
+    valor: valor que será transferido
+    rg: rg do cliente que está realizando a operação de transferência
+    rg_favorecido: rg do cliente que foi selecionado para receber o valor da transferência
+    """
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
         try:
             client_socket.connect((host, porta))
@@ -133,6 +159,10 @@ def enviar_request_transferencia(valor, rg, rg_favorecido):
             return (Responses.INTERNAL_ERROR, str(error))
 
 def consultar_saldo_request(rg):
+    """
+    Contecta-se com o servidor e faz uma requisição para obter o saldo atual do cliente
+    rg: rg do cliente
+    """
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
         try:
             client_socket.connect((host, porta))
@@ -158,6 +188,10 @@ def consultar_saldo_request(rg):
                 return (Responses.INTERNAL_ERROR, str(error))
 
 def obter_lista_clientes():
+    """
+    Contecta-se com o servidor e faz uma requisição para obter a lista de clientes do banco,
+    junto com seus respectivos RGs
+    """
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
         try:  
             client_socket.connect((host, porta))

@@ -5,6 +5,8 @@ parentdir = os.path.dirname(currentdir)
 sys.path.append(parentdir)
 from models.cliente import Cliente
 
+# TODO: Comentar
+
 # Cria a instância do banco de dados
 def criar_db():    
     with sql.connect('clientes.db') as con:

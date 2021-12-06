@@ -12,7 +12,7 @@ sys.path.append(parentdir)
 WINDOW_DIMENSIONS = '300x250'
 
 from client_module.client_layer import *
-
+# TODO: Comentar
 def __criar_janela_principal(nome, rg, saldo):
     try:       
         global janela_principal 
